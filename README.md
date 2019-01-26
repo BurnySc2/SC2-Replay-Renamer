@@ -12,7 +12,7 @@
 
 ### 2) Windows only variant:
 
-- Download the `ReplayRenamer.zip` from TODO
+- Download the `ReplayRenamer.zip` from [here](https://github.com/BurnySc2/SC2-Replay-Renamer/releases/tag/0.1)
 - Extract the zip and launch `ReplayRenamer.exe`
 
 
