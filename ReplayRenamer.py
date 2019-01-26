@@ -254,7 +254,9 @@ class RenamerGUI:
                     target_file_name = replay_renamer.get_replay_rename_name(replay, values)
                     target_replay_path = os.path.join(target_folder_path, target_file_name)
                 scheduled_replays[source_replay_path] = target_replay_path
+
             elif values["show_errors"]:
+                # Replay did not pass the filter
                 sg.Print(f"Replay '{replay_file_name}' did not pass the filter because of filter: {filter_return_value}")
 
         if scheduled_replays:
@@ -267,6 +269,7 @@ class RenamerGUI:
             elif values["replay_file_operation"] == "Rename":
                 successful_target_files = self.replay_renamer.rename_replays(scheduled_replays, values)
 
+            # Zip succesfully copied replays
             if successful_target_files and values["zip_replays"]:
                 zip_path = os.path.join(target_folder_path, "Replays.zip")
                 self.create_zip_archive(zip_path, successful_target_files)
@@ -275,9 +278,11 @@ class RenamerGUI:
     def create_zip_archive(self, zip_path: str, files_to_archive: List[str]):
         target_zip_path = zip_path
         count = 1
+        # Increment zip file if it already exists
         while os.path.isfile(target_zip_path):
             target_zip_path = f"{zip_path} ({count})"
             count += 1
+
         # Would use LZMA for better compression but it takes too long and replays are very compressed already
         # with zipfile.ZipFile(target_zip_path, "w", compression=zipfile.ZIP_LZMA) as f:
         with zipfile.ZipFile(target_zip_path, "w", compression=zipfile.ZIP_DEFLATED) as f:
@@ -317,7 +322,7 @@ class RenamerGUI:
 
             [sg.Text("Replay File Operation", size=(first_column_width, None)), sg.InputCombo(["Copy", "Move", "Rename"], key="replay_file_operation", readonly=True)],
 
-            [sg.Checkbox("Team 1 is Winner", key="sort_winner", change_submits=True)],
+            [sg.Checkbox("Winner is team 1 / player 1", key="sort_winner", change_submits=True)],
 
             [sg.Checkbox("Enable Filter", key="enable_filter", change_submits=True)],
             [sg.Checkbox("Exclude Matchmaking", key="exclude_matchmaking", change_submits=True)],
@@ -359,7 +364,6 @@ class RenamerGUI:
             [sg.Text("Exclude Matchups", size=(first_column_width, None)),
              sg.Input("", key="exclude_matchups", do_not_clear=True, change_submits=True, size=(one_column_width, None), tooltip="zvx, tvt")],
 
-
             [sg.Text("Exclude Maps", size=(first_column_width, None)),
              sg.Input("", key="exclude_maps", do_not_clear=True, change_submits=True, size=(one_column_width, None), tooltip="catalyst, neon violet")],
 
@@ -372,7 +376,7 @@ class RenamerGUI:
 
         self.window = sg.Window("Replay Renamer").Layout(layout)
 
-        # Required so settings can be applied (checkboxes are missing when this method is missing)
+        # Required so settings can be applied (checkboxes are missing if this method is missing)
         self.window.Finalize()
 
         # Load settings before going into event loop
@@ -409,6 +413,10 @@ class ReplayRenamer:
         return int(float(string.strip()))
 
     def split_values(self, string: str) -> Set[str]:
+        """ Split values from
+        "my, words, comma, seperated"
+        to
+        ["my", "words", "comma", "seperated"] """
         return {x.strip().lower() for x in string.strip().split(",")}
 
     def convert_matchup_string(self, string: str) -> List[str]:

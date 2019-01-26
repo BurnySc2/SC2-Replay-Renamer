@@ -98,10 +98,8 @@ $year | 2019
 $month | 01
 $day | 26
 $hour | 18
-$min | 56
-$minute | 56
-$sec | 55
-$second | 55
+$minute or $min | 56
+$second or $sec | 55
 $p1name | BuRny
 $p1mmr | 3456 (0 if it wasn't a ladder game)
 $p1race | Terran
@@ -129,7 +127,7 @@ Rename Pattern | | See above
 Replays Folder | `C:/Users/Burny/Documents/StarCraft II/Accounts` | The given replay folder (and its subfolders) will be parsed for replays
 Target Folder | `C:/MyReplays` | The target folder where replays will be copied / moved to
 Replay File Operation | Copy/Move/Rename | If `Rename` was selected, the `Replays Folder` will be used. If `Copy` or `Move` was selected, replays will be copied/moved and in the `Target Folder` renamed 
-Team 1 is winner | | If `True`, the winning team / player will be stored in `$p1name` and `$t1names` variables, the loser in `$p2name` and `$t2names`
+Winner is player 1 / team 1 | | If `True`, the winning team / player will be stored in `$p1name` and `$t1names` variables, the loser in `$p2name` and `$t2names`
 Enable Filter | | If `False`, all the filters below will be ignored and replays will just be renamed (and copied / moved)
 Exclude Matchmaking | | Excludes replays that were played where a queue system was used
 Exclude Custom Games | | Exclude replays that were used by hosting games via custom game / arcade
