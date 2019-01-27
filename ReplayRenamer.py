@@ -627,6 +627,9 @@ class ReplayRenamer:
     def copy_replays(self, replay_path_dict: Dict[str, str], values: Dict[str, str]):
         successfully_copied_files = []
         for source_path, target_path in replay_path_dict.items():
+            if source_path == target_path:
+                successfully_copied_files.append(target_path)
+                continue
             if os.path.isfile(target_path):
                 base_name = os.path.basename(source_path)
                 if values["show_errors"]:
@@ -640,6 +643,9 @@ class ReplayRenamer:
     def move_replays(self, replay_path_dict: Dict[str, str], values: Dict[str, str]):
         successfully_moved_files = []
         for source_path, target_path in replay_path_dict.items():
+            if source_path == target_path:
+                successfully_moved_files.append(target_path)
+                continue
             if os.path.isfile(target_path):
                 base_name = os.path.basename(source_path)
                 if values["show_errors"]:
@@ -653,6 +659,9 @@ class ReplayRenamer:
     def rename_replays(self, replay_path_dict: Dict[str, str], values: Dict[str, str]):
         successfully_renamed_files = []
         for source_path, target_path in replay_path_dict.items():
+            if source_path == target_path:
+                successfully_renamed_files.append(target_path)
+                continue
             if os.path.isfile(target_path):
                 base_name = os.path.basename(source_path)
                 if values["show_errors"]:
