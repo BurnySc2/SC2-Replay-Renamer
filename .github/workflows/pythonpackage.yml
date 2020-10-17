@@ -48,12 +48,16 @@ jobs:
 
       - name: Copy sc2reader folder contents
         run: |
-          pip install sc2reader
           echo %PATH%
+          echo %pythonLocation%
           ls env:
           echo %PYTHONPATH%
           ls c:\hostedtoolcache\windows\python
+          pip install sc2reader
           ls c:\hostedtoolcache\windows\python\3.7.9\x64\lib\site-packages
+          xcopy %pythonLocation%\lib\site-packages\sc2reader ./sc2reader
+          ls
+          pip uninstall sc2reader
         if: matrix.os == 'windows-latest' && matrix.python-version == '3.7'
 
       - name: Build windows binary
