@@ -67,7 +67,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./ReplayRenamer.exe
+          asset_path: ./dist/ReplayRenamer.exe
           asset_name: ReplayRenamer.exe
           asset_content_type: application/zip
         if: matrix.os == 'windows-latest' && matrix.python-version == '3.7'
