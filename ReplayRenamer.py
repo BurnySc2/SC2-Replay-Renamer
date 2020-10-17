@@ -1,8 +1,11 @@
 import sc2reader
-from typing import List, Dict, Set, Optional, Union
-import json, re
 import PySimpleGUI as sg
-import getpass, os, shutil
+
+from typing import List, Dict, Set, Union, Optional
+import json
+import getpass
+import os
+import shutil
 import zipfile
 
 """
@@ -94,20 +97,13 @@ $p1r: "Z"
 """
 
 
-def main():
-    gui = RenamerGUI()
-    gui.run()
-
-
 class RenamerGUI:
     def __init__(self):
         # Get pc username (for replay file path)
-        # self.username = getpass.getuser()
-        self.username = os.environ["USERNAME"]
-        # print(self.username)
+        self.username = getpass.getuser()
 
         # Change the look of PySimpleGui
-        sg.ChangeLookAndFeel("BrownBlue") # BrownBlue, Dark, Black
+        sg.ChangeLookAndFeel("BrownBlue")  # BrownBlue, Dark, Black
 
         # Settings dictionary
         self.settings: dict = {}
@@ -121,40 +117,43 @@ class RenamerGUI:
         self.replay_renamer = ReplayRenamer()
 
     def load_defaults(self):
-        self.settings.update({
-            "rename_pattern": "$gametype $year-$month-$day $hour-$min-$sec $t1names($t1races) $t1mmr vs $t2mmr ($t2races)$t2names - $durationmins mins on $mapname",
-            "source_path": f"C:/Users/{self.username}/Documents/StarCraft II/Accounts",
-            "target_path": f"C:/MyReplays",
-            "replay_file_operation": "Copy",
-            "sort_winner": True,
-            "enable_filter": True,
-            "exclude_matchmaking": False,
-            "exclude_custom_games": False,
-            "exclude_games_with_ai": False,
-            "exclude_draws": False,
-            "exclude_resume_from_replay": False,
-            "wol": True,
-            "hots": True,
-            "lotv": True,
-            "match_names": "",
-            "exclude_names": "",
-            "game_version_min": "",
-            "game_version_max": "",
-            "game_length_min": "",
-            "game_length_max": "",
-            "players_min": "",
-            "players_max": "",
-            "avg_mmr_min": "",
-            "avg_mmr_max": "",
-            "include_matchups": "",
-            "exclude_matchups": "",
-            "exclude_maps": "",
-            "show_errors": False,
-            "zip_replays": False,
-        })
-
+        """ Set default values to settings before loading settings.json file from disk """
+        self.settings.update(
+            {
+                "rename_pattern": "$gametype $year-$month-$day $hour-$min-$sec $t1names($t1races) $t1mmr vs $t2mmr ($t2races)$t2names - $durationmins mins on $mapname on $version",
+                "source_path": f"C:/Users/{self.username}/Documents/StarCraft II/Accounts",
+                "target_path": f"C:/MyReplays",
+                "replay_file_operation": "Copy",
+                "sort_winner": True,
+                "enable_filter": True,
+                "exclude_matchmaking": False,
+                "exclude_custom_games": False,
+                "exclude_games_with_ai": False,
+                "exclude_draws": False,
+                "exclude_resume_from_replay": False,
+                "wol": True,
+                "hots": True,
+                "lotv": True,
+                "match_names": "",
+                "exclude_names": "",
+                "game_version_min": "",
+                "game_version_max": "",
+                "game_length_min": "",
+                "game_length_max": "",
+                "players_min": "",
+                "players_max": "",
+                "avg_mmr_min": "",
+                "avg_mmr_max": "",
+                "include_matchups": "",
+                "exclude_matchups": "",
+                "exclude_maps": "",
+                "show_errors": False,
+                "zip_replays": False,
+            }
+        )
 
     def load_settings(self):
+        """ Load settings from file if it exists """
         if os.path.isfile(self.settings_path):
             try:
                 with open(self.settings_path) as f:
@@ -163,19 +162,8 @@ class RenamerGUI:
             except Exception as e:
                 sg.Print(f"Error loading the settings.json:\n{e}")
 
-
-    def apply_settings_to_gui(self):
-        self.window.Fill(self.settings)
-        # for element_id, element_value in self.settings.items():
-        #     print(f"Updating element {element_id} with value {element_value}")
-        #     self.window.FindElement(key=element_id).Update(value=element_value)
-
-
-    def load_gui_into_settings(self, values: Dict[str, str]):
-        self.settings.update(values)
-
-
     def save_settings(self):
+        """ Save settings to file """
         if self.old_settings != self.settings:
             # Fix for multiline: keeps appending \n at the end
             if "rename_pattern" in self.settings:
@@ -185,26 +173,53 @@ class RenamerGUI:
                 print("Saved settings")
             self.old_settings = self.settings
 
+    def apply_settings_to_gui(self):
+        """ Apply settings to GUI. Takes a dictionary with key as element names (key=...) and value as element values """
+        self.window.Fill(self.settings)
+        # for element_id, element_value in self.settings.items():
+        #     print(f"Updating element {element_id} with value {element_value}")
+        #     self.window.FindElement(key=element_id).Update(value=element_value)
+
+    def load_gui_into_settings(self, values: Dict[str, str]):
+        """ Update settings from GUI input values """
+        self.settings.update(values)
 
     def verify_entered_data(self, values: Dict[str, str]):
         """ Function to check if all the entered GUI data is valid (returns True if parsed successfully. """
-        comma_seperated_elements = {"match_names", "exclude_names", "include_matchups", "exclude_matchups", "exclude_maps"}
-        number_elements = {"players_min", "players_max", "game_length_min", "game_length_max", "avg_mmr_min", "avg_mmr_max"}
+        comma_seperated_elements = {
+            "match_names",
+            "exclude_names",
+            "include_matchups",
+            "exclude_matchups",
+            "exclude_maps",
+        }
+        number_elements = {
+            "players_min",
+            "players_max",
+            "game_length_min",
+            "game_length_max",
+            "avg_mmr_min",
+            "avg_mmr_max",
+        }
 
         # Check game version tuple
         if values["game_version_min"] != "" and values["game_version_max"] != "":
             if tuple(values["game_version_min"]) > tuple(values["game_version_max"]):
                 low = values["game_version_min"]
                 high = values["game_version_max"]
-                sg.Print(f"Rightmost game version needs to be higher than the left game version, you entered '{low}' and '{high}'")
+                sg.Print(
+                    f"Rightmost game version needs to be higher than the left game version, you entered '{low}' and '{high}'"
+                )
                 return False
 
         # Check replay rename pattern
-        not_allowed_characters = {"\\", "/", "*", "?", "\"", "<", ">", "|"}
+        not_allowed_characters = {"\\", "/", "*", "?", '"', "<", ">", "|"}
         for character in values["rename_pattern"]:
             if character in not_allowed_characters:
                 pattern = values["rename_pattern"]
-                sg.Print(f"Character '{character}' not allowed in renaming pattern, not allowed characters: {str(not_allowed_characters)}, your pattern is: {pattern}")
+                sg.Print(
+                    f"Character '{character}' not allowed in renaming pattern, not allowed characters: {str(not_allowed_characters)}, your pattern is: {pattern}"
+                )
                 return False
 
         # Check comma seperated elements and number elements that need to be converted from string
@@ -213,21 +228,24 @@ class RenamerGUI:
                 try:
                     _ = self.replay_renamer.convert_string_to_int(element_value)
                 except:
-                    sg.Print(f"Invalid entered data in field {element_id}, needs to be a number but you entered '{element_value}'")
+                    sg.Print(
+                        f"Invalid entered data in field {element_id}, needs to be a number but you entered '{element_value}'"
+                    )
                     return False
 
             if element_id in comma_seperated_elements:
                 try:
                     _ = self.replay_renamer.split_values(element_value)
                 except Exception as e:
-                    sg.Print(f"Invalid entered data in field {element_id}, unable to parse value. You entered {element_value}, error:\n{e}")
+                    sg.Print(
+                        f"Invalid entered data in field {element_id}, unable to parse value. You entered {element_value}, error:\n{e}"
+                    )
                     return False
         return True
 
-
     def rename_replays(self, values: Dict[str, str]):
         replay_renamer = ReplayRenamer()
-        replays_iterator = replay_renamer.load_replays(values["source_path"])
+        # replays_iterator = replay_renamer.load_replays(values["source_path"])
 
         target_folder_path = values["target_path"]
         if not os.path.isdir(target_folder_path):
@@ -239,9 +257,16 @@ class RenamerGUI:
 
         # Replays path with {replay_source_path: replay_target_path}
         scheduled_replays: Dict[str, str] = {}
+        replays = os.listdir(values["source_path"])
+        replay_paths = [os.path.join(values["source_path"], replay_name) for replay_name in replays]
 
-        for replay in replays_iterator:
-            print(f"Loaded replay: {replay.filename}")
+        for replay_path in replay_paths:
+            print(f"Loading replay: {replay_path}")
+            try:
+                replay = replay_renamer.load_replay(replay_path)
+            except Exception as e:
+                sg.Print(f"Error loading replay '{replay_path}'\nError: {e}")
+                continue
             filter_return_value = replay_renamer.does_replay_pass_filter(replay, values)
             replay_file_name = os.path.basename(replay.filename)
             if filter_return_value is True:
@@ -257,7 +282,9 @@ class RenamerGUI:
 
             elif values["show_errors"]:
                 # Replay did not pass the filter
-                sg.Print(f"Replay '{replay_file_name}' did not pass the filter because of filter: {filter_return_value}")
+                sg.Print(
+                    f"Replay '{replay_file_name}' did not pass the filter because of filter: {filter_return_value}"
+                )
 
         if scheduled_replays:
             # List of replays that were copied / moved / renamed: [path1, path2, path3]
@@ -274,7 +301,6 @@ class RenamerGUI:
                 zip_path = os.path.join(target_folder_path, "Replays.zip")
                 self.create_zip_archive(zip_path, successful_target_files)
 
-
     def create_zip_archive(self, zip_path: str, files_to_archive: List[str]):
         target_zip_path = zip_path
         count = 1
@@ -290,7 +316,6 @@ class RenamerGUI:
                 file_name = os.path.basename(file_path)
                 f.write(file_path, arcname=file_name)
 
-
     def handle_events(self, event: str, values: Dict[str, str]):
         if event == "rename_replays":
             self.load_gui_into_settings(values)
@@ -298,11 +323,11 @@ class RenamerGUI:
             if self.verify_entered_data(values):
                 self.rename_replays(values)
 
-
-    def handle_exit(self, event: str, values: Dict[str, str]):
-        self.load_gui_into_settings(values)
+    def handle_exit(self, event: Optional[str], values: Optional[Dict[str, str]]):
+        """ If the program is abrupty closed (pressing the X or using the exit button), save settings to file """
+        if values is not None:
+            self.load_gui_into_settings(values)
         self.save_settings()
-
 
     def run(self):
         replay_path = f"C:/Users/{self.username}/Documents/StarCraft II/Accounts"
@@ -314,64 +339,179 @@ class RenamerGUI:
         self.load_settings()
 
         layout = [
-            [sg.Text("Rename Pattern", size=(first_column_width, None)), sg.Multiline("", size=(one_column_width, 3), do_not_clear=True, key="rename_pattern")],
-
-            [sg.Text("Replays Folder", size=(first_column_width, None)), sg.InputText(f"{replay_path}", key="source_path", do_not_clear=True, change_submits=True), sg.FolderBrowse("Browse", initial_folder=self.settings["source_path"], target="source_path")],
-
-            [sg.Text("Target Folder", size=(first_column_width, None)), sg.InputText("", do_not_clear=True, key="target_path", change_submits=True), sg.FolderBrowse("Browse", initial_folder=replay_path, target="target_path")],
-
-            [sg.Text("Replay File Operation", size=(first_column_width, None)), sg.InputCombo(["Copy", "Move", "Rename"], key="replay_file_operation", readonly=True)],
-
-            [sg.Checkbox("Winner is team 1 / player 1", key="sort_winner", change_submits=True)],
-
+            [
+                sg.Text("Rename Pattern", size=(first_column_width, None)),
+                sg.Multiline("", size=(one_column_width, 3), do_not_clear=True, key="rename_pattern",),
+            ],
+            [
+                sg.Text("Replays Folder", size=(first_column_width, None)),
+                sg.InputText(f"{replay_path}", key="source_path", do_not_clear=True, change_submits=True,),
+                sg.FolderBrowse("Browse", initial_folder=self.settings["source_path"], target="source_path",),
+            ],
+            [
+                sg.Text("Target Folder", size=(first_column_width, None)),
+                sg.InputText("", do_not_clear=True, key="target_path", change_submits=True),
+                sg.FolderBrowse("Browse", initial_folder=replay_path, target="target_path"),
+            ],
+            [
+                sg.Text("Replay File Operation", size=(first_column_width, None)),
+                sg.InputCombo(["Copy", "Move", "Rename"], key="replay_file_operation", readonly=True,),
+            ],
+            [sg.Checkbox("Winner is team 1 / player 1", key="sort_winner", change_submits=True,)],
             [sg.Checkbox("Enable Filter", key="enable_filter", change_submits=True)],
-            [sg.Checkbox("Exclude Matchmaking", key="exclude_matchmaking", change_submits=True)],
-            [sg.Checkbox("Exclude Custom Games", key="exclude_custom_games", change_submits=True)],
-            [sg.Checkbox("Exclude Games with AI", key="exclude_games_with_ai", change_submits=True)],
+            [sg.Checkbox("Exclude Matchmaking", key="exclude_matchmaking", change_submits=True,)],
+            [sg.Checkbox("Exclude Custom Games", key="exclude_custom_games", change_submits=True,)],
+            [sg.Checkbox("Exclude Games with AI", key="exclude_games_with_ai", change_submits=True,)],
             [sg.Checkbox("Exclude Draws", key="exclude_draws", change_submits=True)],
-            [sg.Checkbox("Exclude Resumed from Replay", key="exclude_resume_from_replay", change_submits=True)],
-
-            [sg.Text("Expansions", size=(first_column_width, None)),
-             sg.Checkbox("WoL", key="wol"),
-             sg.Checkbox("HotS", key="hots"),
-             sg.Checkbox("LotV", key="lotv")],
-
-            [sg.Text("Match Names", size=(first_column_width, None), tooltip="This replay will only be renamed if one of the names is in the replay (not case sensitive)"),
-             sg.Input("", key="match_names", do_not_clear=True, change_submits=True, size=(one_column_width, None), tooltip="burny, brain")],
-
-            [sg.Text("Exclude Names", size=(first_column_width, None), tooltip="This replay will only be renamed if none of the names is in the replay (not case sensitive)"),
-             sg.Input("", key="exclude_names", do_not_clear=True, change_submits=True, size=(one_column_width, None), tooltip="burny, brain")],
-
-            [sg.Text("Game Version", size=(first_column_width, None)),
-             sg.Input("", key="game_version_min", do_not_clear=True, change_submits=True, size=(two_column_width, None), tooltip="4.6.0"),
-             sg.Input("", key="game_version_max", do_not_clear=True, change_submits=True, size=(two_column_width, None), tooltip="4.8.2")],
-
-            [sg.Text("Game Length (Minutes)", size=(first_column_width, None)),
-             sg.Input("", key="game_length_min", do_not_clear=True, change_submits=True, size=(two_column_width, None), tooltip="3"),
-             sg.Input("", key="game_length_max", do_not_clear=True, change_submits=True, size=(two_column_width, None), tooltip="40")],
-
-            [sg.Text("Amount of Players", size=(first_column_width, None)),
-             sg.Input("", key="players_min", do_not_clear=True, change_submits=True, size=(two_column_width, None), tooltip="2"),
-             sg.Input("", key="players_max", do_not_clear=True, change_submits=True, size=(two_column_width, None), tooltip="8")],
-
-            [sg.Text("Average MMR", size=(first_column_width, None)),
-             sg.Input("", key="avg_mmr_min", do_not_clear=True, change_submits=True, size=(two_column_width, None), tooltip="3500"),
-             sg.Input("", key="avg_mmr_max", do_not_clear=True, change_submits=True, size=(two_column_width, None), tooltip="4500")],
-
-            [sg.Text("Include Matchups", size=(first_column_width, None)),
-             sg.Input("", key="include_matchups", do_not_clear=True, change_submits=True, size=(one_column_width, None), tooltip="tvz, pvx")],
-
-            [sg.Text("Exclude Matchups", size=(first_column_width, None)),
-             sg.Input("", key="exclude_matchups", do_not_clear=True, change_submits=True, size=(one_column_width, None), tooltip="zvx, tvt")],
-
-            [sg.Text("Exclude Maps", size=(first_column_width, None)),
-             sg.Input("", key="exclude_maps", do_not_clear=True, change_submits=True, size=(one_column_width, None), tooltip="catalyst, neon violet")],
-
+            [sg.Checkbox("Exclude Resumed from Replay", key="exclude_resume_from_replay", change_submits=True,)],
+            [
+                sg.Text("Expansions", size=(first_column_width, None)),
+                sg.Checkbox("WoL", key="wol"),
+                sg.Checkbox("HotS", key="hots"),
+                sg.Checkbox("LotV", key="lotv"),
+            ],
+            [
+                sg.Text(
+                    "Match Names",
+                    size=(first_column_width, None),
+                    tooltip="This replay will only be renamed if one of the names is in the replay (not case sensitive)",
+                ),
+                sg.Input(
+                    "",
+                    key="match_names",
+                    do_not_clear=True,
+                    change_submits=True,
+                    size=(one_column_width, None),
+                    tooltip="burny, brain",
+                ),
+            ],
+            [
+                sg.Text(
+                    "Exclude Names",
+                    size=(first_column_width, None),
+                    tooltip="This replay will only be renamed if none of the names is in the replay (not case sensitive)",
+                ),
+                sg.Input(
+                    "",
+                    key="exclude_names",
+                    do_not_clear=True,
+                    change_submits=True,
+                    size=(one_column_width, None),
+                    tooltip="burny, brain",
+                ),
+            ],
+            [
+                sg.Text("Game Version", size=(first_column_width, None)),
+                sg.Input(
+                    "",
+                    key="game_version_min",
+                    do_not_clear=True,
+                    change_submits=True,
+                    size=(two_column_width, None),
+                    tooltip="4.6.0",
+                ),
+                sg.Input(
+                    "",
+                    key="game_version_max",
+                    do_not_clear=True,
+                    change_submits=True,
+                    size=(two_column_width, None),
+                    tooltip="4.8.2",
+                ),
+            ],
+            [
+                sg.Text("Game Length (Minutes)", size=(first_column_width, None)),
+                sg.Input(
+                    "",
+                    key="game_length_min",
+                    do_not_clear=True,
+                    change_submits=True,
+                    size=(two_column_width, None),
+                    tooltip="3",
+                ),
+                sg.Input(
+                    "",
+                    key="game_length_max",
+                    do_not_clear=True,
+                    change_submits=True,
+                    size=(two_column_width, None),
+                    tooltip="40",
+                ),
+            ],
+            [
+                sg.Text("Amount of Players", size=(first_column_width, None)),
+                sg.Input(
+                    "",
+                    key="players_min",
+                    do_not_clear=True,
+                    change_submits=True,
+                    size=(two_column_width, None),
+                    tooltip="2",
+                ),
+                sg.Input(
+                    "",
+                    key="players_max",
+                    do_not_clear=True,
+                    change_submits=True,
+                    size=(two_column_width, None),
+                    tooltip="8",
+                ),
+            ],
+            [
+                sg.Text("Average MMR", size=(first_column_width, None)),
+                sg.Input(
+                    "",
+                    key="avg_mmr_min",
+                    do_not_clear=True,
+                    change_submits=True,
+                    size=(two_column_width, None),
+                    tooltip="3500",
+                ),
+                sg.Input(
+                    "",
+                    key="avg_mmr_max",
+                    do_not_clear=True,
+                    change_submits=True,
+                    size=(two_column_width, None),
+                    tooltip="4500",
+                ),
+            ],
+            [
+                sg.Text("Include Matchups", size=(first_column_width, None)),
+                sg.Input(
+                    "",
+                    key="include_matchups",
+                    do_not_clear=True,
+                    change_submits=True,
+                    size=(one_column_width, None),
+                    tooltip="tvz, pvx",
+                ),
+            ],
+            [
+                sg.Text("Exclude Matchups", size=(first_column_width, None)),
+                sg.Input(
+                    "",
+                    key="exclude_matchups",
+                    do_not_clear=True,
+                    change_submits=True,
+                    size=(one_column_width, None),
+                    tooltip="zvx, tvt",
+                ),
+            ],
+            [
+                sg.Text("Exclude Maps", size=(first_column_width, None)),
+                sg.Input(
+                    "",
+                    key="exclude_maps",
+                    do_not_clear=True,
+                    change_submits=True,
+                    size=(one_column_width, None),
+                    tooltip="catalyst, neon violet",
+                ),
+            ],
             [sg.Checkbox("Show Errors", key="show_errors")],
-
             [sg.Checkbox("Zip Replays after Renaming", key="zip_replays")],
-
-            [sg.Button("Rename Replays", key="rename_replays"), sg.Button("Exit", key="exit")]
+            [sg.Button("Rename Replays", key="rename_replays"), sg.Button("Exit", key="exit"),],
         ]
 
         self.window = sg.Window("Replay Renamer").Layout(layout)
@@ -387,7 +527,12 @@ class RenamerGUI:
             event, values = self.window.Read()
 
             print(event, values)
-            if event is None or event == "exit":
+            # X was pressed
+            if event is None:
+                self.handle_exit(event, values)
+                break
+            # "Exit" was pressed
+            elif event == "exit":
                 self.handle_exit(event, values)
                 break
             else:
@@ -434,17 +579,20 @@ class ReplayRenamer:
         for valid_matchup in valid_matchups:
             matchup1, matchup2 = matchup
             valid1, valid2 = valid_matchup
-            if len(matchup1) != len(valid1): continue
-            if len(matchup2) != len(valid2): continue
+            if len(matchup1) != len(valid1):
+                continue
+            if len(matchup2) != len(valid2):
+                continue
 
-            is_valid_match1 = (all(v == "X" or m == v for m, v in zip(matchup1, valid1))
-                               and all(v == "X" or m == v for m, v in zip(matchup2, valid2)))
-            is_valid_match2 = (all(v == "X" or m == v for m, v in zip(matchup2, valid1))
-                               and all(v == "X" or m == v for m, v in zip(matchup1, valid2)))
+            is_valid_match1 = all(v == "X" or m == v for m, v in zip(matchup1, valid1)) and all(
+                v == "X" or m == v for m, v in zip(matchup2, valid2)
+            )
+            is_valid_match2 = all(v == "X" or m == v for m, v in zip(matchup2, valid1)) and all(
+                v == "X" or m == v for m, v in zip(matchup1, valid2)
+            )
             if is_valid_match1 or is_valid_match2:
                 return True
         return False
-
 
     def does_replay_pass_filter(self, replay: "Replay", values: Dict[str, str]) -> Union[bool, str]:
         if values["enable_filter"]:
@@ -479,8 +627,10 @@ class ReplayRenamer:
                 release_tuple = tuple(replay.release_string)
                 min_value = values["game_version_min"]
                 max_value = values["game_version_max"]
-                if not ((min_value == "" or tuple(min_value) <= release_tuple)
-                    and (max_value == "" or release_tuple <= tuple(max_value))):
+                if not (
+                    (min_value == "" or tuple(min_value) <= release_tuple)
+                    and (max_value == "" or release_tuple <= tuple(max_value))
+                ):
                     return "Game Version"
 
             conv = self.convert_string_to_int
@@ -488,21 +638,32 @@ class ReplayRenamer:
                 game_length = replay.length.mins + replay.length.secs / 60
                 min_value = values["game_length_min"]
                 max_value = values["game_length_max"]
-                if not ((min_value == "" or conv(min_value) <= game_length) and (max_value == "" or game_length <= conv(max_value))):
+                if not (
+                    (min_value == "" or conv(min_value) <= game_length)
+                    and (max_value == "" or game_length <= conv(max_value))
+                ):
                     return "Game Length"
 
             if values["players_min"] != "" or values["players_max"] != "":
                 players_amount = len(replay.players)
                 min_value = values["players_min"]
                 max_value = values["players_max"]
-                if not ((min_value == "" or conv(min_value) <= players_amount) and (max_value == "" or players_amount <= conv(max_value))):
+                if not (
+                    (min_value == "" or conv(min_value) <= players_amount)
+                    and (max_value == "" or players_amount <= conv(max_value))
+                ):
                     return "Game Length"
 
             if values["avg_mmr_min"] != "" or values["avg_mmr_max"] != "" and len(replay.teams) >= 2:
-                avg_mmr = sum(player.init_data.get("scaled_rating", 0) or 0 if hasattr(player, "init_data") else 0 for player in replay.players) / len(replay.players)
+                avg_mmr = sum(
+                    player.init_data.get("scaled_rating", 0) or 0 if hasattr(player, "init_data") else 0
+                    for player in replay.players
+                ) / len(replay.players)
                 min_value = values["avg_mmr_min"]
                 max_value = values["avg_mmr_max"]
-                if avg_mmr != 0 and not ((min_value == "" or conv(min_value) <= avg_mmr) and (max_value == "" or avg_mmr <= conv(max_value))):
+                if avg_mmr != 0 and not (
+                    (min_value == "" or conv(min_value) <= avg_mmr) and (max_value == "" or avg_mmr <= conv(max_value))
+                ):
                     return "Average MMR"
 
             if len(replay.teams) == 2 and len(replay.players) == 2:
@@ -532,40 +693,62 @@ class ReplayRenamer:
                     return "Exclude Maps"
         return True
 
-
     def get_replay_values(self, replay: "Replay", values: Dict[str, str]) -> dict:
         # print(hasattr(replay.players[0], "init_data"))
         # print(hasattr(replay.players[1], "init_data"))
         player_data = []
-        player_data.append([
-            # Player name
-            replay.players[0].name,
-            # Player mmr, computers dont have "init_data" and it can be "None" if it wasn't a ranked game
-            replay.players[0].init_data.get("scaled_rating", 0) or 0 if hasattr(replay.players[0], "init_data") else 0,
-            # Player race
-            replay.players[0].play_race])
+        player_data.append(
+            [
+                # Player name
+                replay.players[0].name,
+                # Player mmr, computers dont have "init_data" and it can be "None" if it wasn't a ranked game
+                replay.players[0].init_data.get("scaled_rating", 0) or 0
+                if hasattr(replay.players[0], "init_data")
+                else 0,
+                # Player race
+                replay.players[0].play_race,
+            ]
+        )
         if len(replay.players) > 1:
-            player_data.append([replay.players[1].name,
-                 replay.players[1].init_data.get("scaled_rating", 0) or 0 if hasattr(replay.players[1], "init_data") else 0,
-                 replay.players[1].play_race])
+            player_data.append(
+                [
+                    replay.players[1].name,
+                    replay.players[1].init_data.get("scaled_rating", 0) or 0
+                    if hasattr(replay.players[1], "init_data")
+                    else 0,
+                    replay.players[1].play_race,
+                ]
+            )
         else:
             player_data.append(["None", 0, "None"])
 
         team_data = []
-        team_data.append([
+        team_data.append(
+            [
                 # Player names
                 " ".join(player.name for player in replay.teams[0].players),
                 # Sum of player mmr
-                sum(player.init_data.get("scaled_rating", 0) or 0 if hasattr(player, "init_data") else 0 for player in replay.teams[0].players) // len(replay.teams[0].players),
+                sum(
+                    player.init_data.get("scaled_rating", 0) or 0 if hasattr(player, "init_data") else 0
+                    for player in replay.teams[0].players
+                )
+                // len(replay.teams[0].players),
                 # Races in short (e.g. "TZPT")
-                replay.teams[0].lineup
-            ])
+                replay.teams[0].lineup,
+            ]
+        )
         if len(replay.teams) > 1:
-            team_data.append([
+            team_data.append(
+                [
                     " ".join(player.name for player in replay.teams[1].players),
-                    sum(player.init_data.get("scaled_rating", 0) or 0 if hasattr(player, "init_data") else 0 for player in replay.teams[1].players) // len(replay.teams[1].players),
-                    replay.teams[1].lineup
-                ])
+                    sum(
+                        player.init_data.get("scaled_rating", 0) or 0 if hasattr(player, "init_data") else 0
+                        for player in replay.teams[1].players
+                    )
+                    // len(replay.teams[1].players),
+                    replay.teams[1].lineup,
+                ]
+            )
         else:
             team_data.append(["", 0, ""])
 
@@ -584,7 +767,13 @@ class ReplayRenamer:
             "$version": ".".join(replay.release_string.split(".")[:-1]),
             "$region": replay.region,
             "$REGION": replay.region.upper(),
-            "$avgmmr": sum(player.init_data.get("scaled_rating", 0) or 0 if hasattr(player, "init_data") else 0 for player in replay.players) // len(replay.players) if len(replay.players) > 0 else 0,
+            "$avgmmr": sum(
+                player.init_data.get("scaled_rating", 0) or 0 if hasattr(player, "init_data") else 0
+                for player in replay.players
+            )
+            // len(replay.players)
+            if len(replay.players) > 0
+            else 0,
             "$year": f"{replay.start_time.year:02d}",
             "$month": f"{replay.start_time.month:02d}",
             "$day": f"{replay.start_time.day:02d}",
@@ -593,28 +782,51 @@ class ReplayRenamer:
             "$minute": f"{replay.start_time.minute:02d}",
             "$sec": f"{replay.start_time.second:02d}",
             "$second": f"{replay.start_time.second:02d}",
-
             # Player data
-            "$p1name": player_data[replay.winner.number - 1][0] if replay.winner and values["sort_winner"] else player_data[0][0],
-            "$p1mmr": player_data[replay.winner.number - 1][1] if replay.winner and values["sort_winner"] else player_data[0][1],
-            "$p1race": player_data[replay.winner.number - 1][2] if replay.winner and values["sort_winner"] else player_data[0][2],
-            "$p1r": player_data[replay.winner.number - 1][2][0] if replay.winner and values["sort_winner"] else player_data[0][2][0],
-
-            "$p2name": player_data[2 - replay.winner.number][0] if replay.winner and values["sort_winner"] else player_data[1][0],
-            "$p2mmr": player_data[2 - replay.winner.number][1] if replay.winner and values["sort_winner"] else player_data[1][1],
-            "$p2race": player_data[2 - replay.winner.number][2] if replay.winner and values["sort_winner"] else player_data[1][2],
-            "$p2r": player_data[2 - replay.winner.number][2][0] if replay.winner and values["sort_winner"] else player_data[1][2][0],
-
+            "$p1name": player_data[replay.winner.number - 1][0]
+            if replay.winner and replay.winner.number < 3 and values["sort_winner"]
+            else player_data[0][0],
+            "$p1mmr": player_data[replay.winner.number - 1][1]
+            if replay.winner and replay.winner.number < 3 and values["sort_winner"]
+            else player_data[0][1],
+            "$p1race": player_data[replay.winner.number - 1][2]
+            if replay.winner and replay.winner.number < 3 and values["sort_winner"]
+            else player_data[0][2],
+            "$p1r": player_data[replay.winner.number - 1][2][0]
+            if replay.winner and replay.winner.number < 3 and values["sort_winner"]
+            else player_data[0][2][0],
+            "$p2name": player_data[2 - replay.winner.number][0]
+            if replay.winner and replay.winner.number < 3 and values["sort_winner"]
+            else player_data[1][0],
+            "$p2mmr": player_data[2 - replay.winner.number][1]
+            if replay.winner and replay.winner.number < 3 and values["sort_winner"]
+            else player_data[1][1],
+            "$p2race": player_data[2 - replay.winner.number][2]
+            if replay.winner and replay.winner.number < 3 and values["sort_winner"]
+            else player_data[1][2],
+            "$p2r": player_data[2 - replay.winner.number][2][0]
+            if replay.winner and replay.winner.number < 3 and values["sort_winner"]
+            else player_data[1][2][0],
             # Team data
-            "$t1names": team_data[replay.winner.number - 1][0] if replay.winner and values["sort_winner"] else team_data[0][0],
-            "$t1mmr": team_data[replay.winner.number - 1][1] if replay.winner and values["sort_winner"] else team_data[0][1],
-            "$t1races": team_data[replay.winner.number - 1][2] if replay.winner and values["sort_winner"] else team_data[0][2],
-
-            "$t2names": team_data[2 - replay.winner.number][0] if replay.winner and values["sort_winner"] else team_data[1][0],
-            "$t2mmr": team_data[2 - replay.winner.number][1] if replay.winner and values["sort_winner"] else team_data[1][1],
-            "$t2races": team_data[2 - replay.winner.number][2] if replay.winner and values["sort_winner"] else team_data[1][2],
+            "$t1names": team_data[replay.winner.number - 1][0]
+            if replay.winner and replay.winner.number < 3 and values["sort_winner"]
+            else team_data[0][0],
+            "$t1mmr": team_data[replay.winner.number - 1][1]
+            if replay.winner and replay.winner.number < 3 and values["sort_winner"]
+            else team_data[0][1],
+            "$t1races": team_data[replay.winner.number - 1][2]
+            if replay.winner and replay.winner.number < 3 and values["sort_winner"]
+            else team_data[0][2],
+            "$t2names": team_data[2 - replay.winner.number][0]
+            if replay.winner and replay.winner.number < 3 and values["sort_winner"]
+            else team_data[1][0],
+            "$t2mmr": team_data[2 - replay.winner.number][1]
+            if replay.winner and replay.winner.number < 3 and values["sort_winner"]
+            else team_data[1][1],
+            "$t2races": team_data[2 - replay.winner.number][2]
+            if replay.winner and replay.winner.number < 3 and values["sort_winner"]
+            else team_data[1][2],
         }
-
 
     def get_replay_rename_name(self, replay: "Replay", values: Dict[str, str]) -> str:
         replay_info = self.get_replay_values(replay, values)
@@ -622,7 +834,6 @@ class ReplayRenamer:
         for variable, value in replay_info.items():
             replay_target_name = replay_target_name.replace(variable, str(value))
         return replay_target_name + ".SC2Replay"
-
 
     def copy_replays(self, replay_path_dict: Dict[str, str], values: Dict[str, str]):
         successfully_copied_files = []
@@ -633,12 +844,13 @@ class ReplayRenamer:
             if os.path.isfile(target_path):
                 base_name = os.path.basename(source_path)
                 if values["show_errors"]:
-                    sg.Print(f"Could not copy file '{base_name}' because it already exists in target folder '{target_path}'")
+                    sg.Print(
+                        f"Could not copy file '{base_name}' because it already exists in target folder '{target_path}'"
+                    )
                 continue
             shutil.copy2(source_path, target_path)
             successfully_copied_files.append(target_path)
         return successfully_copied_files
-
 
     def move_replays(self, replay_path_dict: Dict[str, str], values: Dict[str, str]):
         successfully_moved_files = []
@@ -649,12 +861,13 @@ class ReplayRenamer:
             if os.path.isfile(target_path):
                 base_name = os.path.basename(source_path)
                 if values["show_errors"]:
-                    sg.Print(f"Could not move file '{base_name}' because it already exists in target folder '{target_path}'")
+                    sg.Print(
+                        f"Could not move file '{base_name}' because it already exists in target folder '{target_path}'"
+                    )
                 continue
             shutil.move(source_path, target_path)
             successfully_moved_files.append(target_path)
         return successfully_moved_files
-
 
     def rename_replays(self, replay_path_dict: Dict[str, str], values: Dict[str, str]):
         successfully_renamed_files = []
@@ -665,11 +878,18 @@ class ReplayRenamer:
             if os.path.isfile(target_path):
                 base_name = os.path.basename(source_path)
                 if values["show_errors"]:
-                    sg.Print(f"Could not rename file '{base_name}' because it already exists in target folder '{target_path}'")
+                    sg.Print(
+                        f"Could not rename file '{base_name}' because it already exists in target folder '{target_path}'"
+                    )
                 continue
             shutil.move(source_path, target_path)
             successfully_renamed_files.append(target_path)
         return successfully_renamed_files
+
+
+def main():
+    gui = RenamerGUI()
+    gui.run()
 
 
 if __name__ == "__main__":
