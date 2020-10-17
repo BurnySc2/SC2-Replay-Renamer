@@ -93,14 +93,6 @@ six = "*"
 restructuredText = ["rst2ansi"]
 
 [[package]]
-name = "mpyq"
-version = "0.2.5"
-description = "A Python library for extracting MPQ (MoPaQ) files."
-category = "main"
-optional = false
-python-versions = "*"
-
-[[package]]
 name = "packaging"
 version = "20.4"
 description = "Core utilities for Python packages"
@@ -236,17 +228,6 @@ mando = ">=0.6,<0.7"
 flake8 = ["flake8-polyfill"]
 
 [[package]]
-name = "sc2reader"
-version = "1.6.0"
-description = "Utility for parsing Starcraft II replay files"
-category = "main"
-optional = false
-python-versions = "*"
-
-[package.dependencies]
-mpyq = ">=0.2.4"
-
-[[package]]
 name = "six"
 version = "1.15.0"
 description = "Python 2 and 3 compatibility utilities"
@@ -277,7 +258,7 @@ testing = ["pytest (>=3.5,<3.7.3 || >3.7.3)", "pytest-checkdocs (>=1.2.3)", "pyt
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.7"
-content-hash = "bb28e498824d2149abd7e8b2f2035b4fc4c3cfbc50db2ecd7daabd8b4dca79c1"
+content-hash = "4488e2ba92e7346663ac227043c17831175ebfddad122ee632bf4d67be7e6ef6"
 
 [metadata.files]
 altgraph = [
@@ -314,9 +295,6 @@ macholib = [
 mando = [
     {file = "mando-0.6.4-py2.py3-none-any.whl", hash = "sha256:4ce09faec7e5192ffc3c57830e26acba0fd6cd11e1ee81af0d4df0657463bd1c"},
     {file = "mando-0.6.4.tar.gz", hash = "sha256:79feb19dc0f097daa64a1243db578e7674909b75f88ac2220f1c065c10a0d960"},
-]
-mpyq = [
-    {file = "mpyq-0.2.5.tar.gz", hash = "sha256:30aaf5962be569f3f2b53978060cd047434ee4f5a215925dd6ff0fef04ec0007"},
 ]
 packaging = [
     {file = "packaging-20.4-py2.py3-none-any.whl", hash = "sha256:998416ba6962ae7fbd6596850b80e17859a5753ba17c32284f67bfff33784181"},
@@ -359,10 +337,6 @@ pywin32-ctypes = [
 radon = [
     {file = "radon-4.3.2-py2.py3-none-any.whl", hash = "sha256:b991de491eb2edbc2aac8f5f7ebf02b799852f076fa5a73fedf79d144d85e37e"},
     {file = "radon-4.3.2.tar.gz", hash = "sha256:758b3ab345aa86e95f642713612a57da7c7da6d552c4dbfbe397a67601ace7dd"},
-]
-sc2reader = [
-    {file = "sc2reader-1.6.0-py3-none-any.whl", hash = "sha256:b1d7f9d05d0d5d89d0bbd98fce028fd94339910e5eb3f6cb6512681664932aee"},
-    {file = "sc2reader-1.6.0.tar.gz", hash = "sha256:312f8674ef8bd2bcc03127fd28747768ecf9ec4ccfb0c888953041eda29baf44"},
 ]
 six = [
     {file = "six-1.15.0-py2.py3-none-any.whl", hash = "sha256:8b74bedcbbbaca38ff6d7491d76f2b06b3592611af620f8426e82dddb04a5ced"},
