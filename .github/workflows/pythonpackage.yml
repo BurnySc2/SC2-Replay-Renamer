@@ -44,6 +44,11 @@ jobs:
           poetry run pyinstaller ReplayRenamer.py --onefile
         if: matrix.os == 'windows-latest' && matrix.python-version == '3.7'
 
+      - name: List contents of dist folder
+        run: |
+          ls dist
+        if: matrix.os == 'windows-latest' && matrix.python-version == '3.7'
+
       # Push to github releases
       - name: Create Draft Release
         id: create_release
@@ -57,18 +62,13 @@ jobs:
           prerelease: false
         if: matrix.os == 'windows-latest' && matrix.python-version == '3.7'
 
-      - name: List contents of dist folder
-        run: |
-          ls dist
-        if: matrix.os == 'windows-latest' && matrix.python-version == '3.7'
-
       - uses: actions/upload-release-asset@v1.0.1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./my-artifact.zip
-          asset_name: my-artifact.zip
+          asset_path: ./ReplayRenamer.exe
+          asset_name: ReplayRenamer.exe
           asset_content_type: application/zip
         if: matrix.os == 'windows-latest' && matrix.python-version == '3.7'
 
