@@ -9,7 +9,7 @@ jobs:
       fail-fast: false
       matrix:
         os: [windows-latest, ubuntu-latest, macos-latest]
-        python-version: [3.7.8, 3.8]
+        python-version: [3.7, 3.8]
 
     steps:
       - uses: actions/checkout@v1
@@ -44,19 +44,19 @@ jobs:
       - name: Install requirements
         run: |
           pip install pyinstaller pysimplegui mpyq
-        if: matrix.os == 'windows-latest' && matrix.python-version == '3.7.8'
+        if: matrix.os == 'windows-latest' && matrix.python-version == '3.7'
 
       - name: Copy sc2reader folder contents
         run: |
           pip install sc2reader
           ls c:\hostedtoolcache\windows\python
-          ls c:\hostedtoolcache\windows\python\3.7.8\x64\lib\site-packages
-        if: matrix.os == 'windows-latest' && matrix.python-version == '3.7.8'
+          ls c:\hostedtoolcache\windows\python\3.7.9\x64\lib\site-packages
+        if: matrix.os == 'windows-latest' && matrix.python-version == '3.7'
 
       - name: Build windows binary
         run: |
           pyinstaller ReplayRenamer.py --onefile --clean --noconfirm --add-data "sc2reader;sc2reader"
-        if: matrix.os == 'windows-latest' && matrix.python-version == '3.7.8'
+        if: matrix.os == 'windows-latest' && matrix.python-version == '3.7'
 
 #      - name: Build (Poetry)
 #        run: |
@@ -68,7 +68,7 @@ jobs:
       - name: List contents of dist folder
         run: |
           ls dist
-        if: matrix.os == 'windows-latest' && matrix.python-version == '3.7.8'
+        if: matrix.os == 'windows-latest' && matrix.python-version == '3.7'
 
       # Push to github releases
       - name: Create Draft Release
@@ -81,7 +81,7 @@ jobs:
           release_name: Windows Release
           draft: true
           prerelease: false
-        if: matrix.os == 'windows-latest' && matrix.python-version == '3.7.8'
+        if: matrix.os == 'windows-latest' && matrix.python-version == '3.7'
 
       - uses: actions/upload-release-asset@v1.0.1
         env:
@@ -91,11 +91,11 @@ jobs:
           asset_path: ./dist/ReplayRenamer.exe
           asset_name: ReplayRenamer.exe
           asset_content_type: application/zip
-        if: matrix.os == 'windows-latest' && matrix.python-version == '3.7.8'
+        if: matrix.os == 'windows-latest' && matrix.python-version == '3.7'
 
       - uses: eregon/publish-release@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           release_id: ${{ steps.create_release.outputs.id }}
-        if: matrix.os == 'windows-latest' && matrix.python-version == '3.7.8'
+        if: matrix.os == 'windows-latest' && matrix.python-version == '3.7'
