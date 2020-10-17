@@ -51,15 +51,15 @@ jobs:
           echo path
           echo $PATH
           echo pythonLocation
-          echo $pythonLocation
+          echo $env:pythonLocation
           echo env:
           echo PYTHONPATH
-          echo %PYTHONPATH%
+          echo ${{ pythonLocation }}
           pip install sc2reader
           echo creating directory
           mkdir sc2reader
           echo copying directory
-          xcopy %pythonLocation%\lib\site-packages\sc2reader\* sc2reader /s /i
+          xcopy ${{ pythonLocation }}\lib\site-packages\sc2reader\* sc2reader /s /i
           echo listing subdirectory
           ls
           pip uninstall sc2reader -y
