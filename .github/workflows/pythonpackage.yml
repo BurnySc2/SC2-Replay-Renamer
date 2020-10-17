@@ -24,16 +24,13 @@ jobs:
 
       - name: Install poetry
         run: |
-          python -m pip install poetry
-
-      - name: Export requirements.txt
-        run: |
-          poetry export -f requirements.txt --output requirements.txt
+          pip install poetry
 
       - name: Install dependencies
         run: |
           poetry install
 
+      # TODO Make tests
 #      - name: Test with pytest
 #        run: |
 #          poetry run pytest
@@ -43,15 +40,10 @@ jobs:
         run: |
           poetry run radon cc ./ -a -nb
 
-      - name: Install requirements
-        run: |
-          pip install -r requirements.txt
-          pip install pyinstaller pysimplegui
-        if: matrix.os == 'windows-latest' && matrix.python-version == '3.7'
-
       # Copy sc2reader contents from library to local folder, because pyinstaller doesn't include the .csv files from the library folder
       - name: Copy sc2reader folder contents
         run: |
+          pip install sc2reader
           echo $env:pythonLocation
           xcopy $env:pythonLocation\lib\site-packages\sc2reader\* sc2reader /s /i
           ls
@@ -60,13 +52,15 @@ jobs:
 
       - name: Build windows binary
         run: |
-          pyinstaller ReplayRenamer.py --onefile --clean --noconfirm --add-data "sc2reader;sc2reader"
+          poetry run pyinstaller ReplayRenamer.py --onefile --clean --noconfirm --add-data "sc2reader;sc2reader"
         if: matrix.os == 'windows-latest' && matrix.python-version == '3.7'
 
       - name: List contents of dist folder
         run: |
           ls dist
         if: matrix.os == 'windows-latest' && matrix.python-version == '3.7'
+
+      # TODO Run .exe file with arguments
 
       # Push to github releases
       - name: Create Draft Release
