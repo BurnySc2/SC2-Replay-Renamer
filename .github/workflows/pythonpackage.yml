@@ -39,10 +39,17 @@ jobs:
 #        run: |
 #          poetry run radon cc ./ -a -nb
 
+#      - name: Build
+#        run: |
+#          pip install pyinstaller pysimplegui mpyq
+#          pyinstaller ReplayRenamer.py --onefile --clean --noconfirm --add-data "sc2reader;sc2reader"
+#        if: matrix.os == 'windows-latest' && matrix.python-version == '3.7'
+
       - name: Build
         run: |
-          pip install pyinstaller pysimplegui mpyq
-          pyinstaller ReplayRenamer.py --onefile --clean --noconfirm --add-data "sc2reader;sc2reader"
+          pip install poetry
+          poetry install
+          poetry run pyinstaller ReplayRenamer.py --onefile --clean --noconfirm --add-data "sc2reader;sc2reader"
         if: matrix.os == 'windows-latest' && matrix.python-version == '3.7'
 
       - name: List contents of dist folder
