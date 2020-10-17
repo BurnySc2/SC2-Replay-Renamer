@@ -53,9 +53,8 @@ jobs:
           ls c:\hostedtoolcache\windows\python\3.7.8\x64\lib\site-packages
         if: matrix.os == 'windows-latest' && matrix.python-version == '3.7.8'
 
-      - name: Build
+      - name: Build windows binary
         run: |
-#          pip install pyinstaller pysimplegui mpyq sc2reader
           pyinstaller ReplayRenamer.py --onefile --clean --noconfirm --add-data "sc2reader;sc2reader"
         if: matrix.os == 'windows-latest' && matrix.python-version == '3.7.8'
 
