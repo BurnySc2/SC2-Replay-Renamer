@@ -40,7 +40,6 @@ jobs:
 #          poetry run radon cc ./ -a -nb
 
 
-
       - name: Install requirements
         run: |
           pip install pyinstaller pysimplegui mpyq
@@ -55,9 +54,9 @@ jobs:
           ls c:\hostedtoolcache\windows\python
           pip install sc2reader
           ls c:\hostedtoolcache\windows\python\3.7.9\x64\lib\site-packages
-          xcopy %pythonLocation%\lib\site-packages\sc2reader ./sc2reader
+          xcopy %pythonLocation%\lib\site-packages\sc2reader\* sc2reader /s /i
           ls
-          pip uninstall sc2reader
+          pip uninstall sc2reader -y
         if: matrix.os == 'windows-latest' && matrix.python-version == '3.7'
 
       - name: Build windows binary
