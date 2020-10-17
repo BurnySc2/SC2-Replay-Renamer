@@ -236,6 +236,17 @@ mando = ">=0.6,<0.7"
 flake8 = ["flake8-polyfill"]
 
 [[package]]
+name = "sc2reader"
+version = "1.6.0"
+description = "Utility for parsing Starcraft II replay files"
+category = "main"
+optional = false
+python-versions = "*"
+
+[package.dependencies]
+mpyq = ">=0.2.4"
+
+[[package]]
 name = "six"
 version = "1.15.0"
 description = "Python 2 and 3 compatibility utilities"
@@ -266,7 +277,7 @@ testing = ["pytest (>=3.5,<3.7.3 || >3.7.3)", "pytest-checkdocs (>=1.2.3)", "pyt
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.7"
-content-hash = "09c239e716c0551fe60b90e658913f0ea4c3c74e127c0b66ce53d7945625ea2a"
+content-hash = "8e3b6e50e6e6e99f5c755e6f55ae2e2ad3a29fa688139d1b7864b7bc6a63c8ef"
 
 [metadata.files]
 altgraph = [
@@ -348,6 +359,10 @@ pywin32-ctypes = [
 radon = [
     {file = "radon-4.3.2-py2.py3-none-any.whl", hash = "sha256:b991de491eb2edbc2aac8f5f7ebf02b799852f076fa5a73fedf79d144d85e37e"},
     {file = "radon-4.3.2.tar.gz", hash = "sha256:758b3ab345aa86e95f642713612a57da7c7da6d552c4dbfbe397a67601ace7dd"},
+]
+sc2reader = [
+    {file = "sc2reader-1.6.0-py3-none-any.whl", hash = "sha256:b1d7f9d05d0d5d89d0bbd98fce028fd94339910e5eb3f6cb6512681664932aee"},
+    {file = "sc2reader-1.6.0.tar.gz", hash = "sha256:312f8674ef8bd2bcc03127fd28747768ecf9ec4ccfb0c888953041eda29baf44"},
 ]
 six = [
     {file = "six-1.15.0-py2.py3-none-any.whl", hash = "sha256:8b74bedcbbbaca38ff6d7491d76f2b06b3592611af620f8426e82dddb04a5ced"},

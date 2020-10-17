@@ -22,41 +22,38 @@ jobs:
       # Use pip requirements.txt cache https://github.com/actions/cache/blob/master/examples.md#python---pip
       # Apparently you can't use cache when using pipenv (but perhaps when specifying the pipenv environment folder?)
 
-#      - name: Install poetry
-#        run: |
-#          python -m pip install poetry
+      - name: Install poetry
+        run: |
+          python -m pip install poetry
 
-#      - name: Install dependencies
-#        run: |
-#          poetry install
+      - name: Export requirements.txt
+        run: |
+          poetry export -f requirements.txt --output requirements.txt
 
-#      - name: Test with pytest
-#        run: |
-#          poetry run pytest
+      - name: Install dependencies
+        run: |
+          poetry install
 
-#      - name: Run radon (cyclomatic complexity report)
-#        # './' denotes the current directory
-#        run: |
-#          poetry run radon cc ./ -a -nb
+      - name: Test with pytest
+        run: |
+          poetry run pytest
 
+      - name: Run radon (cyclomatic complexity report)
+        # './' denotes the current directory
+        run: |
+          poetry run radon cc ./ -a -nb
 
       - name: Install requirements
         run: |
-          pip install pyinstaller pysimplegui mpyq
+          pip install -r requirements.txt
+          pip install pyinstaller pysimplegui
         if: matrix.os == 'windows-latest' && matrix.python-version == '3.7'
 
-#          ls env:
-#          echo ${{ pythonLocation }}
+      # Copy sc2reader contents from library to local folder, because pyinstaller doesn't include the .csv files from the library folder
       - name: Copy sc2reader folder contents
         run: |
-          echo pythonLocation
           echo $env:pythonLocation
-          echo creating directory
-          mkdir sc2reader
-          echo copying directory
-          pip install sc2reader
           xcopy $env:pythonLocation\lib\site-packages\sc2reader\* sc2reader /s /i
-          echo listing subdirectory
           ls
           pip uninstall sc2reader -y
         if: matrix.os == 'windows-latest' && matrix.python-version == '3.7'
@@ -65,13 +62,6 @@ jobs:
         run: |
           pyinstaller ReplayRenamer.py --onefile --clean --noconfirm --add-data "sc2reader;sc2reader"
         if: matrix.os == 'windows-latest' && matrix.python-version == '3.7'
-
-#      - name: Build (Poetry)
-#        run: |
-#          pip install poetry
-#          poetry install
-#          poetry run pyinstaller ReplayRenamer.py --onefile --clean --noconfirm --add-data "sc2reader;sc2reader"
-#        if: matrix.os == 'windows-latest' && matrix.python-version == '3.7'
 
       - name: List contents of dist folder
         run: |
