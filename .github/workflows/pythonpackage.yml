@@ -45,15 +45,17 @@ jobs:
           pip install pyinstaller pysimplegui mpyq
         if: matrix.os == 'windows-latest' && matrix.python-version == '3.7'
 
+#          echo %PATH%
       - name: Copy sc2reader folder contents
         run: |
-          echo %PATH%
+          echo pythonLocation
           echo %pythonLocation%
+          echo env:
           ls env:
+          echo PYTHONPATH
           echo %PYTHONPATH%
-          ls c:\hostedtoolcache\windows\python
           pip install sc2reader
-          ls c:\hostedtoolcache\windows\python\3.7.9\x64\lib\site-packages
+          mkdir sc2reader
           xcopy %pythonLocation%\lib\site-packages\sc2reader\* sc2reader /s /i
           ls
           pip uninstall sc2reader -y
