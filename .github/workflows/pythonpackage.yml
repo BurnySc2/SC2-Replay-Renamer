@@ -41,7 +41,7 @@ jobs:
 
       - name: Build
         run: |
-          poetry run pyinstaller ReplayRenamer.py --onefile --add-data "sc2reader/*;sc2reader"
+          poetry run pyinstaller ReplayRenamer.py --onefile --add-data="sc2reader/*;sc2reader"
         if: matrix.os == 'windows-latest' && matrix.python-version == '3.7'
 
       - name: List contents of dist folder
@@ -57,7 +57,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           tag_name: windows
-          release_name: Windows Executeable
+          release_name: Windows Release
           draft: true
           prerelease: false
         if: matrix.os == 'windows-latest' && matrix.python-version == '3.7'
