@@ -46,6 +46,8 @@ jobs:
         if: matrix.os == 'windows-latest' && matrix.python-version == '3.7'
 
 #          ls env:
+#          echo ${{ pythonLocation }}
+#          xcopy ${{ pythonLocation }}\lib\site-packages\sc2reader\* sc2reader /s /i
       - name: Copy sc2reader folder contents
         run: |
           echo path
@@ -54,12 +56,10 @@ jobs:
           echo $env:pythonLocation
           echo env:
           echo PYTHONPATH
-          echo ${{ pythonLocation }}
           pip install sc2reader
           echo creating directory
           mkdir sc2reader
           echo copying directory
-          xcopy ${{ pythonLocation }}\lib\site-packages\sc2reader\* sc2reader /s /i
           echo listing subdirectory
           ls
           pip uninstall sc2reader -y
