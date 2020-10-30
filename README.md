@@ -6,20 +6,24 @@
 
 ### 1) Python variant:
 
-- Download and install or newer [Python 3.6](https://www.python.org/downloads/release/python-368/) (only tested on 3.6)
-- Open the console, navigate to this folder and run `pip install -r requirements.txt` to install the requirements, or alternatively `pip install pysimplegui` from anywhere
-- Launch `ReplayRenamer.py` via doubleclick or from console `python ReplayRename.py`
+Download and install or newer [Python 3.7](https://www.python.org/downloads/) (only tested on 3.7)
+
+Install requirements 
+```
+pip install poetry
+poetry install
+```
+Run
+```
+poetry run python ReplayRenamer.py
+```
 
 ### 2) Windows only variant:
 
-- Download the `ReplayRenamer.zip` from [here](https://github.com/BurnySc2/SC2-Replay-Renamer/releases/tag/0.1)
-- Extract the zip and launch `ReplayRenamer.exe`
-
-
+- Download the `ReplayRenamer.zip` from [here](https://github.com/BurnySc2/SC2-Replay-Renamer/releases)
+- Download and launch `ReplayRenamer.exe`
 
 ## Features
-
-
 
 #### Renaming
 
@@ -38,8 +42,6 @@ $gametype $year-$month-$day $hour-$min-$sec $t1names($t1races) $t1mmr vs $t2mmr 
 ```
 
 A setting exists that automatically figures out which team won the game and puts that team as team 1 (first listed team).
-
-
 
 #### Replay filter system
 
@@ -64,19 +66,13 @@ You can filter by
 - Average MMR of all players
 - Maps
 
-
-
 #### Automatic zipping after renaming
 
 After copying / moving / renaming the replays, you can let this tool automatically zip all the copied / moved / renamed replays to `Replays.zip` file.
 
-
-
 ## Preview
 
 ![Preview Image](https://i.imgur.com/u9ZcAx7.png)
-
-
 
 ## Rename Pattern Configuration
 
@@ -114,8 +110,6 @@ $t1races | TZ
 $t2names | BuRnyProtoss NotBurnyRandom
 $t2mmr | 5001 (0 if it wasn't a ladder game)
 $t2races | PZ
-
-
 
 ## GUI Element Descriptions
 

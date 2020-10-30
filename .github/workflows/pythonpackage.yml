@@ -1,0 +1,93 @@
+name: RunTests
+
+on: [push]
+
+jobs:
+  build:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-latest, ubuntu-latest, macos-latest]
+        python-version: [3.7, 3.8]
+
+    steps:
+      - uses: actions/checkout@v1
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v1
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      # Use pip requirements.txt cache https://github.com/actions/cache/blob/master/examples.md#python---pip
+      # Apparently you can't use cache when using pipenv (but perhaps when specifying the pipenv environment folder?)
+
+      - name: Install poetry
+        run: |
+          pip install poetry
+
+      - name: Install dependencies
+        run: |
+          poetry install
+
+      # TODO Make tests
+#      - name: Test with pytest
+#        run: |
+#          poetry run pytest
+
+      - name: Run radon (cyclomatic complexity report)
+        # './' denotes the current directory
+        run: |
+          poetry run radon cc ./ -a -nb
+
+      # Copy sc2reader contents from library to local folder, because pyinstaller doesn't include the .csv files from the library folder
+      - name: Copy sc2reader folder contents
+        run: |
+          pip install sc2reader
+          echo $env:pythonLocation
+          xcopy $env:pythonLocation\lib\site-packages\sc2reader\* sc2reader /s /i
+          ls
+          pip uninstall sc2reader -y
+        if: matrix.os == 'windows-latest' && matrix.python-version == '3.7'
+
+      - name: Build windows binary
+        run: |
+          poetry run pyinstaller ReplayRenamer.py --onefile --clean --noconfirm --add-data "sc2reader;sc2reader"
+        if: matrix.os == 'windows-latest' && matrix.python-version == '3.7'
+
+      - name: List contents of dist folder
+        run: |
+          ls dist
+        if: matrix.os == 'windows-latest' && matrix.python-version == '3.7'
+
+      # TODO Run .exe file with arguments
+
+      # Push to github releases
+      - name: Create Draft Release
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: windows
+          release_name: Windows Release
+          draft: true
+          prerelease: false
+        if: matrix.os == 'windows-latest' && matrix.python-version == '3.7'
+
+      - uses: actions/upload-release-asset@v1.0.1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./dist/ReplayRenamer.exe
+          asset_name: ReplayRenamer.exe
+          asset_content_type: application/zip
+        if: matrix.os == 'windows-latest' && matrix.python-version == '3.7'
+
+      - uses: eregon/publish-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          release_id: ${{ steps.create_release.outputs.id }}
+        if: matrix.os == 'windows-latest' && matrix.python-version == '3.7'
