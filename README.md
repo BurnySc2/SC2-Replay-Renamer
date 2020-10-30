@@ -20,8 +20,7 @@ poetry run python ReplayRenamer.py
 
 ### 2) Windows only variant:
 
-- Download the `ReplayRenamer.zip` from [here](https://github.com/BurnySc2/SC2-Replay-Renamer/releases)
-- Download and launch `ReplayRenamer.exe`
+- Download and launch the `ReplayRenamer.exe` from [here](https://github.com/BurnySc2/SC2-Replay-Renamer/releases)
 
 ## Features
 

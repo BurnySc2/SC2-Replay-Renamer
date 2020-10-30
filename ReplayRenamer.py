@@ -1,5 +1,6 @@
 import sc2reader
 import PySimpleGUI as sg
+from loguru import logger
 
 from typing import List, Dict, Set, Union, Optional
 import json
@@ -7,6 +8,9 @@ import getpass
 import os
 import shutil
 import zipfile
+from pathlib import Path
+
+from sc2reader.resources import Replay
 
 """
 Replay data variables:
@@ -110,8 +114,8 @@ class RenamerGUI:
         self.old_settings: dict = {}
 
         # Program folder
-        self.path = os.path.dirname(__file__)
-        self.settings_path = os.path.join(self.path, "settings.json")
+        self.path = Path(__file__).parent
+        self.settings_path = self.path / "settings.json"
 
         # Renamer object
         self.replay_renamer = ReplayRenamer()
@@ -154,12 +158,13 @@ class RenamerGUI:
 
     def load_settings(self):
         """ Load settings from file if it exists """
-        if os.path.isfile(self.settings_path):
+        if self.settings_path.is_file():
             try:
-                with open(self.settings_path) as f:
+                with self.settings_path.open() as f:
                     saved_data: dict = json.load(f)
                 self.settings.update(saved_data)
             except Exception as e:
+                logger.trace(f"Error loading settings.json")
                 sg.Print(f"Error loading the settings.json:\n{e}")
 
     def save_settings(self):
@@ -168,9 +173,9 @@ class RenamerGUI:
             # Fix for multiline: keeps appending \n at the end
             if "rename_pattern" in self.settings:
                 self.settings["rename_pattern"] = self.settings["rename_pattern"].strip()
-            with open(self.settings_path, "w") as f:
+            with self.settings_path.open("w") as f:
                 json.dump(self.settings, f, indent=2)
-                print("Saved settings")
+                logger.info("Saved settings")
             self.old_settings = self.settings
 
     def apply_settings_to_gui(self):
@@ -227,7 +232,7 @@ class RenamerGUI:
             if element_value != "" and element_id in number_elements:
                 try:
                     _ = self.replay_renamer.convert_string_to_int(element_value)
-                except:
+                except Exception as e:
                     sg.Print(
                         f"Invalid entered data in field {element_id}, needs to be a number but you entered '{element_value}'"
                     )
@@ -247,37 +252,41 @@ class RenamerGUI:
         replay_renamer = ReplayRenamer()
         # replays_iterator = replay_renamer.load_replays(values["source_path"])
 
-        target_folder_path = values["target_path"]
-        if not os.path.isdir(target_folder_path):
+        target_folder_path = Path(values["target_path"])
+        if not target_folder_path.is_dir():
             try:
-                os.makedirs(target_folder_path)
+                os.makedirs(target_folder_path, exist_ok=True)
             except Exception as e:
                 sg.Print(f"Could not create target folder: {target_folder_path}, error:\n{e}")
                 return
 
         # Replays path with {replay_source_path: replay_target_path}
-        scheduled_replays: Dict[str, str] = {}
-        replays = os.listdir(values["source_path"])
-        replay_paths = [os.path.join(values["source_path"], replay_name) for replay_name in replays]
+        scheduled_replays: Dict[Path, Path] = {}
+        source_path = Path(values["source_path"])
+        replay_paths: List[Path] = [file for file in source_path.iterdir() if file.is_file()]
+        replay_paths.sort(key=lambda i: i.name)
 
         for replay_path in replay_paths:
-            print(f"Loading replay: {replay_path}")
+            logger.info(f"Loading replay: {replay_path}")
             try:
                 replay = replay_renamer.load_replay(replay_path)
+            except IndexError as e:
+                sg.Print(f"Error loading AI Replay '{replay_path}'\nError: {e}")
+                continue
             except Exception as e:
+                logger.exception(f"Error loading replay")
                 sg.Print(f"Error loading replay '{replay_path}'\nError: {e}")
                 continue
             filter_return_value = replay_renamer.does_replay_pass_filter(replay, values)
-            replay_file_name = os.path.basename(replay.filename)
+            replay_file_name = replay_path.stem
             if filter_return_value is True:
-                source_replay_path: str = replay.filename
+                source_replay_path = replay_path
                 if values["replay_file_operation"] == "Rename":
-                    source_folder_path = os.path.dirname(source_replay_path)
-                    target_file_name = replay_renamer.get_replay_rename_name(replay, values)
-                    target_replay_path = os.path.join(source_folder_path, target_file_name)
+                    target_file_name: str = replay_renamer.get_replay_rename_name(replay, values)
+                    target_replay_path = source_replay_path.parent / target_file_name
                 else:
                     target_file_name = replay_renamer.get_replay_rename_name(replay, values)
-                    target_replay_path = os.path.join(target_folder_path, target_file_name)
+                    target_replay_path = target_folder_path / target_file_name
                 scheduled_replays[source_replay_path] = target_replay_path
 
             elif values["show_errors"]:
@@ -298,14 +307,16 @@ class RenamerGUI:
 
             # Zip succesfully copied replays
             if successful_target_files and values["zip_replays"]:
-                zip_path = os.path.join(target_folder_path, "Replays.zip")
+                zip_path = target_folder_path / "Replays.zip"
                 self.create_zip_archive(zip_path, successful_target_files)
 
-    def create_zip_archive(self, zip_path: str, files_to_archive: List[str]):
+        logger.info("Done!")
+
+    def create_zip_archive(self, zip_path: Path, files_to_archive: List[Path]):
         target_zip_path = zip_path
         count = 1
         # Increment zip file if it already exists
-        while os.path.isfile(target_zip_path):
+        while target_zip_path.is_file():
             target_zip_path = f"{zip_path} ({count})"
             count += 1
 
@@ -313,8 +324,7 @@ class RenamerGUI:
         # with zipfile.ZipFile(target_zip_path, "w", compression=zipfile.ZIP_LZMA) as f:
         with zipfile.ZipFile(target_zip_path, "w", compression=zipfile.ZIP_DEFLATED) as f:
             for file_path in files_to_archive:
-                file_name = os.path.basename(file_path)
-                f.write(file_path, arcname=file_name)
+                f.write(file_path, arcname=file_path.name)
 
     def handle_events(self, event: str, values: Dict[str, str]):
         if event == "rename_replays":
@@ -526,7 +536,7 @@ class RenamerGUI:
             # Event Loop
             event, values = self.window.Read()
 
-            print(event, values)
+            logger.info(event, values)
             # X was pressed
             if event is None:
                 self.handle_exit(event, values)
@@ -544,14 +554,16 @@ class RenamerGUI:
 class ReplayRenamer:
     def __init__(self):
         self.settings = {}
-        self.renamer_path = os.path.dirname(__file__)
+        self.renamer_path = Path(__file__)
 
-    def load_replay(self, replay_path):
+    def load_replay(self, replay_path: Path):
         """ Loads a single replay """
+        replay_path = str(replay_path.resolve())
         return sc2reader.load_replay(replay_path, load_level=2, load_map=False)
 
-    def load_replays(self, folder_path):
+    def load_replays(self, folder_path: Path):
         """ Loads multiple replays as generator """
+        folder_path = str(folder_path.resolve())
         return sc2reader.load_replays(folder_path, load_level=2, load_map=False)
 
     def convert_string_to_int(self, string: str) -> int:
@@ -594,7 +606,7 @@ class ReplayRenamer:
                 return True
         return False
 
-    def does_replay_pass_filter(self, replay: "Replay", values: Dict[str, str]) -> Union[bool, str]:
+    def does_replay_pass_filter(self, replay: Replay, values: Dict[str, str]) -> Union[bool, str]:
         if values["enable_filter"]:
             if values["exclude_matchmaking"] and replay.is_ladder:
                 return "Exclude Matchmaking"
@@ -652,7 +664,7 @@ class ReplayRenamer:
                     (min_value == "" or conv(min_value) <= players_amount)
                     and (max_value == "" or players_amount <= conv(max_value))
                 ):
-                    return "Game Length"
+                    return "Player Limit"
 
             if values["avg_mmr_min"] != "" or values["avg_mmr_max"] != "" and len(replay.teams) >= 2:
                 avg_mmr = sum(
@@ -693,7 +705,7 @@ class ReplayRenamer:
                     return "Exclude Maps"
         return True
 
-    def get_replay_values(self, replay: "Replay", values: Dict[str, str]) -> dict:
+    def get_replay_values(self, replay: Replay, values: Dict[str, str]) -> dict:
         # print(hasattr(replay.players[0], "init_data"))
         # print(hasattr(replay.players[1], "init_data"))
         player_data = []
@@ -828,21 +840,21 @@ class ReplayRenamer:
             else team_data[1][2],
         }
 
-    def get_replay_rename_name(self, replay: "Replay", values: Dict[str, str]) -> str:
+    def get_replay_rename_name(self, replay: Replay, values: Dict[str, str]) -> str:
         replay_info = self.get_replay_values(replay, values)
         replay_target_name = values["rename_pattern"].strip()
         for variable, value in replay_info.items():
             replay_target_name = replay_target_name.replace(variable, str(value))
         return replay_target_name + ".SC2Replay"
 
-    def copy_replays(self, replay_path_dict: Dict[str, str], values: Dict[str, str]):
+    def copy_replays(self, replay_path_dict: Dict[Path, Path], values: Dict[str, str]):
         successfully_copied_files = []
         for source_path, target_path in replay_path_dict.items():
             if source_path == target_path:
                 successfully_copied_files.append(target_path)
                 continue
-            if os.path.isfile(target_path):
-                base_name = os.path.basename(source_path)
+            if target_path.is_file():
+                base_name = source_path.name
                 if values["show_errors"]:
                     sg.Print(
                         f"Could not copy file '{base_name}' because it already exists in target folder '{target_path}'"
@@ -852,14 +864,14 @@ class ReplayRenamer:
             successfully_copied_files.append(target_path)
         return successfully_copied_files
 
-    def move_replays(self, replay_path_dict: Dict[str, str], values: Dict[str, str]):
+    def move_replays(self, replay_path_dict: Dict[Path, Path], values: Dict[str, str]):
         successfully_moved_files = []
         for source_path, target_path in replay_path_dict.items():
             if source_path == target_path:
                 successfully_moved_files.append(target_path)
                 continue
-            if os.path.isfile(target_path):
-                base_name = os.path.basename(source_path)
+            if target_path.is_file():
+                base_name = target_path.stem
                 if values["show_errors"]:
                     sg.Print(
                         f"Could not move file '{base_name}' because it already exists in target folder '{target_path}'"
@@ -869,14 +881,14 @@ class ReplayRenamer:
             successfully_moved_files.append(target_path)
         return successfully_moved_files
 
-    def rename_replays(self, replay_path_dict: Dict[str, str], values: Dict[str, str]):
+    def rename_replays(self, replay_path_dict: Dict[Path, Path], values: Dict[str, str]):
         successfully_renamed_files = []
         for source_path, target_path in replay_path_dict.items():
             if source_path == target_path:
                 successfully_renamed_files.append(target_path)
                 continue
-            if os.path.isfile(target_path):
-                base_name = os.path.basename(source_path)
+            if target_path.is_file():
+                base_name = target_path.stem
                 if values["show_errors"]:
                     sg.Print(
                         f"Could not rename file '{base_name}' because it already exists in target folder '{target_path}'"
