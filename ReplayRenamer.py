@@ -351,12 +351,26 @@ class RenamerGUI:
         layout = [
             [
                 sg.Text("Rename Pattern", size=(first_column_width, None)),
-                sg.Multiline("", size=(one_column_width, 3), do_not_clear=True, key="rename_pattern",),
+                sg.Multiline(
+                    "",
+                    size=(one_column_width, 3),
+                    do_not_clear=True,
+                    key="rename_pattern",
+                ),
             ],
             [
                 sg.Text("Replays Folder", size=(first_column_width, None)),
-                sg.InputText(f"{replay_path}", key="source_path", do_not_clear=True, change_submits=True,),
-                sg.FolderBrowse("Browse", initial_folder=self.settings["source_path"], target="source_path",),
+                sg.InputText(
+                    f"{replay_path}",
+                    key="source_path",
+                    do_not_clear=True,
+                    change_submits=True,
+                ),
+                sg.FolderBrowse(
+                    "Browse",
+                    initial_folder=self.settings["source_path"],
+                    target="source_path",
+                ),
             ],
             [
                 sg.Text("Target Folder", size=(first_column_width, None)),
@@ -365,15 +379,49 @@ class RenamerGUI:
             ],
             [
                 sg.Text("Replay File Operation", size=(first_column_width, None)),
-                sg.InputCombo(["Copy", "Move", "Rename"], key="replay_file_operation", readonly=True,),
+                sg.InputCombo(
+                    ["Copy", "Move", "Rename"],
+                    key="replay_file_operation",
+                    readonly=True,
+                ),
             ],
-            [sg.Checkbox("Winner is team 1 / player 1", key="sort_winner", change_submits=True,)],
+            [
+                sg.Checkbox(
+                    "Winner is team 1 / player 1",
+                    key="sort_winner",
+                    change_submits=True,
+                )
+            ],
             [sg.Checkbox("Enable Filter", key="enable_filter", change_submits=True)],
-            [sg.Checkbox("Exclude Matchmaking", key="exclude_matchmaking", change_submits=True,)],
-            [sg.Checkbox("Exclude Custom Games", key="exclude_custom_games", change_submits=True,)],
-            [sg.Checkbox("Exclude Games with AI", key="exclude_games_with_ai", change_submits=True,)],
+            [
+                sg.Checkbox(
+                    "Exclude Matchmaking",
+                    key="exclude_matchmaking",
+                    change_submits=True,
+                )
+            ],
+            [
+                sg.Checkbox(
+                    "Exclude Custom Games",
+                    key="exclude_custom_games",
+                    change_submits=True,
+                )
+            ],
+            [
+                sg.Checkbox(
+                    "Exclude Games with AI",
+                    key="exclude_games_with_ai",
+                    change_submits=True,
+                )
+            ],
             [sg.Checkbox("Exclude Draws", key="exclude_draws", change_submits=True)],
-            [sg.Checkbox("Exclude Resumed from Replay", key="exclude_resume_from_replay", change_submits=True,)],
+            [
+                sg.Checkbox(
+                    "Exclude Resumed from Replay",
+                    key="exclude_resume_from_replay",
+                    change_submits=True,
+                )
+            ],
             [
                 sg.Text("Expansions", size=(first_column_width, None)),
                 sg.Checkbox("WoL", key="wol"),
@@ -521,7 +569,10 @@ class RenamerGUI:
             ],
             [sg.Checkbox("Show Errors", key="show_errors")],
             [sg.Checkbox("Zip Replays after Renaming", key="zip_replays")],
-            [sg.Button("Rename Replays", key="rename_replays"), sg.Button("Exit", key="exit"),],
+            [
+                sg.Button("Rename Replays", key="rename_replays"),
+                sg.Button("Exit", key="exit"),
+            ],
         ]
 
         self.window = sg.Window("Replay Renamer").Layout(layout)
@@ -570,23 +621,23 @@ class ReplayRenamer:
         return int(float(string.strip()))
 
     def split_values(self, string: str) -> Set[str]:
-        """ Split values from
+        """Split values from
         "my, words, comma, seperated"
         to
-        ["my", "words", "comma", "seperated"] """
+        ["my", "words", "comma", "seperated"]"""
         return {x.strip().lower() for x in string.strip().split(",")}
 
     def convert_matchup_string(self, string: str) -> List[str]:
-        """ Input "TXvZX" becomes ["TX", "XZ"]
-            Input "TvX" becomes ["T", "X"] """
+        """Input "TXvZX" becomes ["TX", "XZ"]
+        Input "TvX" becomes ["T", "X"]"""
         split = string.lower().split("v")
         first = "".join(sorted(split[0])).upper()
         second = "".join(sorted(split[1])).upper()
         return [first, second]
 
     def match_matchup(self, matchup: List[str], valid_matchups: List[List[str]]) -> bool:
-        """ Matches ["T", "P"] with [["T", "X"]]
-            and ["TZ", "ZP"] with [["XX", "XZ"]] """
+        """Matches ["T", "P"] with [["T", "X"]]
+        and ["TZ", "ZP"] with [["XX", "XZ"]]"""
         assert len(matchup) == 2
         for valid_matchup in valid_matchups:
             matchup1, matchup2 = matchup
