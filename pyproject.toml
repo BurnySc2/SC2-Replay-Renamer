@@ -5,16 +5,16 @@ description = ""
 authors = ["BuRny <gamingburny@gmail.com>"]
 
 [tool.poetry.dependencies]
-python = "^3.7"
-PySimpleGUI = "^4.30.0"
+python = ">=3.9 <3.13"
+PySimpleGUI = "^4"
 mpyq = "^0.2.5"
 sc2reader = "^1.6.0"
-loguru = "^0.5.3"
+loguru = "^0.7"
 
 [tool.poetry.dev-dependencies]
-pytest = "^6.2.3"
-radon = "^4.5.0"
-pyinstaller = "^4.3"
+pytest = "^8"
+radon = "^6"
+pyinstaller = "^6"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]

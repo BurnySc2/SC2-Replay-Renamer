@@ -9,7 +9,7 @@ jobs:
       fail-fast: false
       matrix:
         os: [windows-latest, ubuntu-latest, macos-latest]
-        python-version: [3.7, 3.8, 3.9]
+        python-version: ["3.9", "3.10", "3.11", "3.12"]
 
     steps:
       - uses: actions/checkout@v1
@@ -47,17 +47,17 @@ jobs:
           xcopy $env:pythonLocation\lib\site-packages\sc2reader\* sc2reader /s /i
           ls
           pip uninstall sc2reader -y
-        if: matrix.os == 'windows-latest' && matrix.python-version == '3.7'
+        if: matrix.os == 'windows-latest' && matrix.python-version == '3.12'
 
       - name: Build windows binary
         run: |
           poetry run pyinstaller ReplayRenamer.py --onefile --clean --noconfirm --add-data "sc2reader;sc2reader"
-        if: matrix.os == 'windows-latest' && matrix.python-version == '3.7'
+        if: matrix.os == 'windows-latest' && matrix.python-version == '3.12'
 
       - name: List contents of dist folder
         run: |
           ls dist
-        if: matrix.os == 'windows-latest' && matrix.python-version == '3.7'
+        if: matrix.os == 'windows-latest' && matrix.python-version == '3.12'
 
       # TODO Run .exe file with arguments
 
@@ -72,7 +72,7 @@ jobs:
           release_name: Windows Release
           draft: true
           prerelease: false
-        if: matrix.os == 'windows-latest' && matrix.python-version == '3.7'
+        if: matrix.os == 'windows-latest' && matrix.python-version == '3.12'
 
       - uses: actions/upload-release-asset@v1.0.1
         env:
@@ -82,11 +82,11 @@ jobs:
           asset_path: ./dist/ReplayRenamer.exe
           asset_name: ReplayRenamer.exe
           asset_content_type: application/zip
-        if: matrix.os == 'windows-latest' && matrix.python-version == '3.7'
+        if: matrix.os == 'windows-latest' && matrix.python-version == '3.12'
 
       - uses: eregon/publish-release@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           release_id: ${{ steps.create_release.outputs.id }}
-        if: matrix.os == 'windows-latest' && matrix.python-version == '3.7'
+        if: matrix.os == 'windows-latest' && matrix.python-version == '3.12'

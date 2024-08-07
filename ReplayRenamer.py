@@ -121,7 +121,7 @@ class RenamerGUI:
         self.replay_renamer = ReplayRenamer()
 
     def load_defaults(self):
-        """ Set default values to settings before loading settings.json file from disk """
+        """Set default values to settings before loading settings.json file from disk"""
         self.settings.update(
             {
                 "rename_pattern": "$gametype $year-$month-$day $hour-$min-$sec $t1names($t1races) $t1mmr vs $t2mmr ($t2races)$t2names - $durationmins mins on $mapname on $version",
@@ -157,7 +157,7 @@ class RenamerGUI:
         )
 
     def load_settings(self):
-        """ Load settings from file if it exists """
+        """Load settings from file if it exists"""
         if self.settings_path.is_file():
             try:
                 with self.settings_path.open() as f:
@@ -168,29 +168,31 @@ class RenamerGUI:
                 sg.Print(f"Error loading the settings.json:\n{e}")
 
     def save_settings(self):
-        """ Save settings to file """
+        """Save settings to file"""
         if self.old_settings != self.settings:
             # Fix for multiline: keeps appending \n at the end
             if "rename_pattern" in self.settings:
-                self.settings["rename_pattern"] = self.settings["rename_pattern"].strip()
+                self.settings["rename_pattern"] = self.settings[
+                    "rename_pattern"
+                ].strip()
             with self.settings_path.open("w") as f:
                 json.dump(self.settings, f, indent=2)
                 logger.info("Saved settings")
             self.old_settings = self.settings
 
     def apply_settings_to_gui(self):
-        """ Apply settings to GUI. Takes a dictionary with key as element names (key=...) and value as element values """
+        """Apply settings to GUI. Takes a dictionary with key as element names (key=...) and value as element values"""
         self.window.Fill(self.settings)
         # for element_id, element_value in self.settings.items():
         #     print(f"Updating element {element_id} with value {element_value}")
         #     self.window.FindElement(key=element_id).Update(value=element_value)
 
     def load_gui_into_settings(self, values: Dict[str, str]):
-        """ Update settings from GUI input values """
+        """Update settings from GUI input values"""
         self.settings.update(values)
 
     def verify_entered_data(self, values: Dict[str, str]):
-        """ Function to check if all the entered GUI data is valid (returns True if parsed successfully. """
+        """Function to check if all the entered GUI data is valid (returns True if parsed successfully."""
         comma_seperated_elements = {
             "match_names",
             "exclude_names",
@@ -257,13 +259,17 @@ class RenamerGUI:
             try:
                 os.makedirs(target_folder_path, exist_ok=True)
             except Exception as e:
-                sg.Print(f"Could not create target folder: {target_folder_path}, error:\n{e}")
+                sg.Print(
+                    f"Could not create target folder: {target_folder_path}, error:\n{e}"
+                )
                 return
 
         # Replays path with {replay_source_path: replay_target_path}
         scheduled_replays: Dict[Path, Path] = {}
         source_path = Path(values["source_path"])
-        replay_paths: List[Path] = [file for file in source_path.iterdir() if file.is_file()]
+        replay_paths: List[Path] = [
+            file for file in source_path.iterdir() if file.is_file()
+        ]
         replay_paths.sort(key=lambda i: i.name)
 
         for replay_path in replay_paths:
@@ -282,10 +288,14 @@ class RenamerGUI:
             if filter_return_value is True:
                 source_replay_path = replay_path
                 if values["replay_file_operation"] == "Rename":
-                    target_file_name: str = replay_renamer.get_replay_rename_name(replay, values)
+                    target_file_name: str = replay_renamer.get_replay_rename_name(
+                        replay, values
+                    )
                     target_replay_path = source_replay_path.parent / target_file_name
                 else:
-                    target_file_name = replay_renamer.get_replay_rename_name(replay, values)
+                    target_file_name = replay_renamer.get_replay_rename_name(
+                        replay, values
+                    )
                     target_replay_path = target_folder_path / target_file_name
                 scheduled_replays[source_replay_path] = target_replay_path
 
@@ -299,11 +309,17 @@ class RenamerGUI:
             # List of replays that were copied / moved / renamed: [path1, path2, path3]
             successful_target_files = []
             if values["replay_file_operation"] == "Copy":
-                successful_target_files = self.replay_renamer.copy_replays(scheduled_replays, values)
+                successful_target_files = self.replay_renamer.copy_replays(
+                    scheduled_replays, values
+                )
             elif values["replay_file_operation"] == "Move":
-                successful_target_files = self.replay_renamer.move_replays(scheduled_replays, values)
+                successful_target_files = self.replay_renamer.move_replays(
+                    scheduled_replays, values
+                )
             elif values["replay_file_operation"] == "Rename":
-                successful_target_files = self.replay_renamer.rename_replays(scheduled_replays, values)
+                successful_target_files = self.replay_renamer.rename_replays(
+                    scheduled_replays, values
+                )
 
             # Zip succesfully copied replays
             if successful_target_files and values["zip_replays"]:
@@ -322,7 +338,9 @@ class RenamerGUI:
 
         # Would use LZMA for better compression but it takes too long and replays are very compressed already
         # with zipfile.ZipFile(target_zip_path, "w", compression=zipfile.ZIP_LZMA) as f:
-        with zipfile.ZipFile(target_zip_path, "w", compression=zipfile.ZIP_DEFLATED) as f:
+        with zipfile.ZipFile(
+            target_zip_path, "w", compression=zipfile.ZIP_DEFLATED
+        ) as f:
             for file_path in files_to_archive:
                 f.write(file_path, arcname=file_path.name)
 
@@ -334,7 +352,7 @@ class RenamerGUI:
                 self.rename_replays(values)
 
     def handle_exit(self, event: Optional[str], values: Optional[Dict[str, str]]):
-        """ If the program is abrupty closed (pressing the X or using the exit button), save settings to file """
+        """If the program is abrupty closed (pressing the X or using the exit button), save settings to file"""
         if values is not None:
             self.load_gui_into_settings(values)
         self.save_settings()
@@ -374,8 +392,12 @@ class RenamerGUI:
             ],
             [
                 sg.Text("Target Folder", size=(first_column_width, None)),
-                sg.InputText("", do_not_clear=True, key="target_path", change_submits=True),
-                sg.FolderBrowse("Browse", initial_folder=replay_path, target="target_path"),
+                sg.InputText(
+                    "", do_not_clear=True, key="target_path", change_submits=True
+                ),
+                sg.FolderBrowse(
+                    "Browse", initial_folder=replay_path, target="target_path"
+                ),
             ],
             [
                 sg.Text("Replay File Operation", size=(first_column_width, None)),
@@ -570,8 +592,8 @@ class RenamerGUI:
             [sg.Checkbox("Show Errors", key="show_errors")],
             [sg.Checkbox("Zip Replays after Renaming", key="zip_replays")],
             [
-                sg.Button("Rename Replays", key="rename_replays"),
-                sg.Button("Exit", key="exit"),
+                sg.Button("Rename Replays", key="rename_replays", size=(10, 3)),
+                sg.Button("Exit", key="exit", size=(10, 3)),
             ],
         ]
 
@@ -608,12 +630,12 @@ class ReplayRenamer:
         self.renamer_path = Path(__file__)
 
     def load_replay(self, replay_path: Path):
-        """ Loads a single replay """
+        """Loads a single replay"""
         replay_path = str(replay_path.resolve())
         return sc2reader.load_replay(replay_path, load_level=2, load_map=False)
 
     def load_replays(self, folder_path: Path):
-        """ Loads multiple replays as generator """
+        """Loads multiple replays as generator"""
         folder_path = str(folder_path.resolve())
         return sc2reader.load_replays(folder_path, load_level=2, load_map=False)
 
@@ -635,7 +657,9 @@ class ReplayRenamer:
         second = "".join(sorted(split[1])).upper()
         return [first, second]
 
-    def match_matchup(self, matchup: List[str], valid_matchups: List[List[str]]) -> bool:
+    def match_matchup(
+        self, matchup: List[str], valid_matchups: List[List[str]]
+    ) -> bool:
         """Matches ["T", "P"] with [["T", "X"]]
         and ["TZ", "ZP"] with [["XX", "XZ"]]"""
         assert len(matchup) == 2
@@ -647,17 +671,19 @@ class ReplayRenamer:
             if len(matchup2) != len(valid2):
                 continue
 
-            is_valid_match1 = all(v == "X" or m == v for m, v in zip(matchup1, valid1)) and all(
-                v == "X" or m == v for m, v in zip(matchup2, valid2)
-            )
-            is_valid_match2 = all(v == "X" or m == v for m, v in zip(matchup2, valid1)) and all(
-                v == "X" or m == v for m, v in zip(matchup1, valid2)
-            )
+            is_valid_match1 = all(
+                v == "X" or m == v for m, v in zip(matchup1, valid1)
+            ) and all(v == "X" or m == v for m, v in zip(matchup2, valid2))
+            is_valid_match2 = all(
+                v == "X" or m == v for m, v in zip(matchup2, valid1)
+            ) and all(v == "X" or m == v for m, v in zip(matchup1, valid2))
             if is_valid_match1 or is_valid_match2:
                 return True
         return False
 
-    def does_replay_pass_filter(self, replay: Replay, values: Dict[str, str]) -> Union[bool, str]:
+    def does_replay_pass_filter(
+        self, replay: Replay, values: Dict[str, str]
+    ) -> Union[bool, str]:
         if values["enable_filter"]:
             if values["exclude_matchmaking"] and replay.is_ladder:
                 return "Exclude Matchmaking"
@@ -676,13 +702,17 @@ class ReplayRenamer:
 
             if values["match_names"] != "":
                 split_names = self.split_values(values["match_names"])
-                at_least_one_player_found = any(player.name.lower() in split_names for player in replay.players)
+                at_least_one_player_found = any(
+                    player.name.lower() in split_names for player in replay.players
+                )
                 if not at_least_one_player_found:
                     return "Match Names"
 
             if values["exclude_names"] != "":
                 split_names = self.split_values(values["exclude_names"])
-                at_least_one_player_found = any(player.name.lower() in split_names for player in replay.players)
+                at_least_one_player_found = any(
+                    player.name.lower() in split_names for player in replay.players
+                )
                 if at_least_one_player_found:
                     return "Exclude Names"
 
@@ -717,15 +747,22 @@ class ReplayRenamer:
                 ):
                     return "Player Limit"
 
-            if values["avg_mmr_min"] != "" or values["avg_mmr_max"] != "" and len(replay.teams) >= 2:
+            if (
+                values["avg_mmr_min"] != ""
+                or values["avg_mmr_max"] != ""
+                and len(replay.teams) >= 2
+            ):
                 avg_mmr = sum(
-                    player.init_data.get("scaled_rating", 0) or 0 if hasattr(player, "init_data") else 0
+                    player.init_data.get("scaled_rating", 0) or 0
+                    if hasattr(player, "init_data")
+                    else 0
                     for player in replay.players
                 ) / len(replay.players)
                 min_value = values["avg_mmr_min"]
                 max_value = values["avg_mmr_max"]
                 if avg_mmr != 0 and not (
-                    (min_value == "" or conv(min_value) <= avg_mmr) and (max_value == "" or avg_mmr <= conv(max_value))
+                    (min_value == "" or conv(min_value) <= avg_mmr)
+                    and (max_value == "" or avg_mmr <= conv(max_value))
                 ):
                     return "Average MMR"
 
@@ -736,22 +773,33 @@ class ReplayRenamer:
                 if values["include_matchups"] != "":
                     # Convert "TvX, ZvX" to [["T", "X"], ["Z", "X"]]
                     # Or "TXvZX" to [["TX", "XZ"]] <- XZ because sorting alphabetically
-                    comma_seperated_matchups = self.split_values(values["include_matchups"])
-                    valid_matchups = [self.convert_matchup_string(x) for x in comma_seperated_matchups]
+                    comma_seperated_matchups = self.split_values(
+                        values["include_matchups"]
+                    )
+                    valid_matchups = [
+                        self.convert_matchup_string(x) for x in comma_seperated_matchups
+                    ]
                     is_match = self.match_matchup(matchup, valid_matchups)
                     if not is_match:
                         return "Include Matchups"
 
                 if values["exclude_matchups"] != "":
-                    comma_seperated_matchups = self.split_values(values["exclude_matchups"])
-                    valid_matchups = [self.convert_matchup_string(x) for x in comma_seperated_matchups]
+                    comma_seperated_matchups = self.split_values(
+                        values["exclude_matchups"]
+                    )
+                    valid_matchups = [
+                        self.convert_matchup_string(x) for x in comma_seperated_matchups
+                    ]
                     is_match = self.match_matchup(matchup, valid_matchups)
                     if is_match:
                         return "Exclude Matchups"
 
             if values["exclude_maps"] != "":
                 comma_seperated_maps = self.split_values(values["exclude_maps"])
-                is_match = any(map_name.lower() in replay.map_name.lower() for map_name in comma_seperated_maps)
+                is_match = any(
+                    map_name.lower() in replay.map_name.lower()
+                    for map_name in comma_seperated_maps
+                )
                 if is_match:
                     return "Exclude Maps"
         return True
@@ -792,7 +840,9 @@ class ReplayRenamer:
                 " ".join(player.name for player in replay.teams[0].players),
                 # Sum of player mmr
                 sum(
-                    player.init_data.get("scaled_rating", 0) or 0 if hasattr(player, "init_data") else 0
+                    player.init_data.get("scaled_rating", 0) or 0
+                    if hasattr(player, "init_data")
+                    else 0
                     for player in replay.teams[0].players
                 )
                 // len(replay.teams[0].players),
@@ -805,7 +855,9 @@ class ReplayRenamer:
                 [
                     " ".join(player.name for player in replay.teams[1].players),
                     sum(
-                        player.init_data.get("scaled_rating", 0) or 0 if hasattr(player, "init_data") else 0
+                        player.init_data.get("scaled_rating", 0) or 0
+                        if hasattr(player, "init_data")
+                        else 0
                         for player in replay.teams[1].players
                     )
                     // len(replay.teams[1].players),
@@ -831,7 +883,9 @@ class ReplayRenamer:
             "$region": replay.region,
             "$REGION": replay.region.upper(),
             "$avgmmr": sum(
-                player.init_data.get("scaled_rating", 0) or 0 if hasattr(player, "init_data") else 0
+                player.init_data.get("scaled_rating", 0) or 0
+                if hasattr(player, "init_data")
+                else 0
                 for player in replay.players
             )
             // len(replay.players)
@@ -932,7 +986,9 @@ class ReplayRenamer:
             successfully_moved_files.append(target_path)
         return successfully_moved_files
 
-    def rename_replays(self, replay_path_dict: Dict[Path, Path], values: Dict[str, str]):
+    def rename_replays(
+        self, replay_path_dict: Dict[Path, Path], values: Dict[str, str]
+    ):
         successfully_renamed_files = []
         for source_path, target_path in replay_path_dict.items():
             if source_path == target_path:
